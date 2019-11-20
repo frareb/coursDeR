@@ -1,0 +1,104 @@
+---
+title: "<small>Module R’Stat1 : TD05</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# TD05 : I'm a freak... {data-background=#273142}
+
+## A quel groupe puis-je m'identifier ?
+
+Objectif :
+
+* A partir de groupes définis, trouver à quel groupe pourraient appartenir un nouveau groupe
+
+## A quel groupe puis-je m'identifier ?
+
+* Groupes de 50 personnes
+* 100 groupes
+* Distributions normales
+
+## Etape 01 : les données
+
+```{r}
+n <- 50
+nGp <- 100
+pop <- lapply(1:nGp, function(i){
+  rnorm(n, 
+    mean = sample(1:100, size = 1), 
+    sd = sample(seq(from = 0, to = 10, by = 0.1), size = 1))
+})
+```
+
+## Etape 02 : représenter les données
+
+```{r, fig.width = 10, fig.height = 5}
+boxplot(pop)
+```
+
+## Etape 03 : décrire les données
+
+```{r}
+sapply(pop, summary)
+```
+
+## Etape 04 : comparer les données au nouveau groupe
+
+```{r}
+gpX <- rnorm(n, mean = sample(10:90, size = 1))
+
+pVal <- sapply(seq_along(pop), function(i){
+  t.test(pop[[i]], gpX)$p.value
+})
+```
+
+## Etape 04
+
+```{r}
+print(pVal)
+```
+
+## Etape 05 : rep. graph.
+
+```{r}
+myCol <- vector(mode = "character", length = nGp)
+myCol[pVal >= 0.05] <- "green"
+myCol[pVal < 0.05] <- "red"
+print(myCol)
+```
+
+## Etape 05 : rep. graph.
+
+```{r, fig.width = 10, fig.height = 5}
+par(mar = c(2, 2, 1, 1))
+boxplot(pop, col = myCol)
+```
+
+## Etape 05 : rep. graph.
+
+```{r}
+sapply(pop, mean)
+```
+
+## Etape 05 : rep. graph.
+
+```{r}
+order(sapply(pop, mean))
+```
+
+## Etape 05 : rep. graph.
+
+```{r}
+popOrder <- pop[order(sapply(pop, mean))]
+myColOrder <- myCol[order(sapply(pop, mean))]
+```
+
+## Etape 05 : rep. graph.
+
+```{r, fig.width = 10, fig.height = 5}
+boxplot(popOrder, col = myColOrder)
+```
+
+# <a href = "R041_modLin.html"> Analyse de variance et le modèle linéaire </a> {data-background=#273142}

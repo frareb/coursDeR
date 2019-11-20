@@ -1,0 +1,304 @@
+---
+title: "<small>Module R’Stat1 : TD06</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# TD06 : régression avec `iris` {data-background=#273142}
+
+## Travail sur les données `iris`
+
+```{r}
+data(iris)
+```
+
+## Travail sur les données `iris`
+
+* Appliquer le modèle de régression linéaire pour étudier la dépendance entre la longueur et la largeur des sépales (`"Sepal.Length"` et `"Sepal.Width"`).
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 4.5, eval = TRUE, echo = TRUE}
+par(mfrow = c(1, 2))
+hist(iris$Sepal.Length)
+hist(iris$Sepal.Width)
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 4.5, eval = TRUE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width)
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 4.5, eval = TRUE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  col = iris$Species, pch = 16)
+```
+
+## Travail sur les données `iris`
+
+```{r}
+summary(lm(iris$Sepal.Width ~ iris$Sepal.Length))
+```
+
+## Travail sur les données `iris`
+
+```{r}
+spp <- unique(iris$Species)
+lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  summary(lmX)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  col = iris$Species, pch = 16)
+spp <- unique(iris$Species)
+lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = mySpp)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  col = iris$Species, pch = 16)
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = mySpp)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, 
+  ylim = c(2, 4.5), xlim = c(4, 8), 
+  panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, 
+  ylim = c(2, 4.5), xlim = c(4, 8), 
+  panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  segments(
+    x0 = iris$Sepal.Length[iris$Species == mySpp],
+    y0 = predict(lmX),
+    x1 = iris$Sepal.Length[iris$Species == mySpp],
+    y1 = iris$Sepal.Width[iris$Species == mySpp], 
+    col = my3col[mySpp], lwd = 1 + colRank/50
+  )
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, 
+  ylim = c(2, 4.5), xlim = c(4, 8), 
+  panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  segments(
+    x0 = iris$Sepal.Length[iris$Species == mySpp],
+    y0 = predict(lmX),
+    x1 = iris$Sepal.Length[iris$Species == mySpp],
+    y1 = iris$Sepal.Width[iris$Species == mySpp], 
+    col = my3col[mySpp], lwd = 1 + colRank/50
+  )
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+```
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, 
+  ylim = c(2, 4.5), xlim = c(4, 8), 
+  panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  segments(
+    x0 = iris$Sepal.Length[iris$Species == mySpp],
+    y0 = predict(lmX),
+    x1 = iris$Sepal.Length[iris$Species == mySpp],
+    y1 = iris$Sepal.Width[iris$Species == mySpp], 
+    col = my3col[mySpp], lwd = 1 + colRank/50
+  )
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+legend("topright", fill = my3col, 
+  legend = levels(iris$Species), bty = "n")
+```
+
+
+## Travail sur les données `iris`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+plot(x = iris$Sepal.Length, y = iris$Sepal.Width, 
+  type = 'n', axes = FALSE, 
+  ylim = c(2, 4.5), xlim = c(4, 8), 
+  panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+my3col <- c("#3b86ff", "#e653c8", "#ffd82b")
+spp <- unique(iris$Species)
+trash <- lapply(spp, function(mySpp){
+  lmX <- lm(iris$Sepal.Width[iris$Species == mySpp] ~ 
+    iris$Sepal.Length[iris$Species == mySpp])
+  points(x = iris$Sepal.Length[iris$Species == mySpp], 
+    y = predict(lmX), type = 'l', lwd = 2, col = my3col[mySpp])
+  myCol <- colorRampPalette(c(my3col[mySpp], "darkred"))(101)
+  colRank <- (iris$Sepal.Width[iris$Species == mySpp] - 
+    predict(lmX))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  segments(
+    x0 = iris$Sepal.Length[iris$Species == mySpp],
+    y0 = predict(lmX),
+    x1 = iris$Sepal.Length[iris$Species == mySpp],
+    y1 = iris$Sepal.Width[iris$Species == mySpp], 
+    col = my3col[mySpp], lwd = 1 + colRank/50
+  )
+  points(
+    x = iris$Sepal.Length[iris$Species == mySpp],
+    y = iris$Sepal.Width[iris$Species == mySpp], 
+    bg = my3col[mySpp], col = myCol[colRank], pch = 21, 
+    cex = 1 + colRank/100)
+})
+legend("topright", fill = my3col, 
+  legend = levels(iris$Species), bty = "n")
+```
+
+# <a href = "R053_regLinMult.html"> Régression linéaire multiple </a> {data-background=#273142}

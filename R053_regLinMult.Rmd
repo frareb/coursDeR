@@ -1,0 +1,394 @@
+---
+title: "<small>Module R’Stat1 : La régression linéaire multiple</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Reg. lin. multiple par l'exemple d'après C. Prieur {data-background=#273142}
+
+## Les données `state`
+
+```{r}
+data(state)
+print(state.x77)
+```
+
+## Les données `state`
+
+state.x77: matrix with 50 rows and 8 columns giving the following statistics in the respective columns.
+<small>
+
+Population: population estimate as of July 1, 1975
+
+Income: per capita income (1974)
+
+Illiteracy: illiteracy (1970, percent of population)
+
+Life Exp: life expectancy in years (1969–71)
+
+Murder: murder and non-negligent manslaughter rate per 100,000 population (1976)
+
+HS Grad: percent high-school graduates (1970)
+
+Frost: mean number of days with minimum temperature below freezing (1931–1960) in capital or large city
+
+Area: land area in square miles
+
+</small>
+
+## Statistiques descriptives
+
+```{r}
+summary(state.x77)
+```
+
+## 
+
+```{r}
+class(state.x77)
+usa <- data.frame(state.x77)
+class(usa)
+```
+
+## Expliquer l'espérance de vie `Life.Exp`
+
+```{r}
+mod01 <- lm(usa$Life.Exp ~ 
+  usa$Population + usa$Income + 
+  usa$Illiteracy + usa$Murder + 
+  usa$HS.Grad + usa$Frost + 
+  usa$Area)
+# lm(Life.Exp ~ ., data = usa)
+```
+
+## 
+
+```{r}
+summary(mod01)
+```
+
+## AIC
+
+"*Le critère d'information d'Akaike, (en anglais Akaike information criterion ou AIC) est une mesure de la qualité d'un modèle statistique proposée par Hirotugu Akaike en 1973.*
+
+*Lorsque l'on estime un modèle statistique, il est possible d'augmenter la vraisemblance du modèle en ajoutant un paramètre. Le critère d'information d'Akaike, tout comme le critère d'information bayésien, permet de pénaliser les modèles en fonction du nombre de paramètres afin de satisfaire le critère de parcimonie. On choisit alors le modèle avec le critère d'information d'Akaike le plus faible.*" [WIKIPEDIA](https://fr.wikipedia.org/wiki/Crit%C3%A8re_d%27information_d%27Akaike)
+
+## 
+
+```{r}
+AIC(mod01)
+```
+
+## 
+
+```{r}
+mod02 <- lm(usa$Life.Exp ~ 
+  usa$Population + usa$Murder + 
+  usa$HS.Grad + usa$Frost)
+# update(mod01,.~.-Area-Illiteracy-Income)
+```
+
+## 
+
+```{r}
+summary(mod02)
+AIC(mod02)
+```
+
+## 
+
+```{r}
+mod03 <- lm(usa$Life.Exp ~ 
+  usa$Murder + 
+  usa$HS.Grad + usa$Frost)
+```
+
+## 
+
+```{r}
+summary(mod03)
+AIC(mod03)
+```
+
+## procédure `stepwise`
+
+```{r}
+mod0X <- step(
+  lm(Life.Exp ∼ ., data = usa), 
+  direction = "backward")
+```
+
+## 
+
+```{r}
+summary(mod0X)
+```
+
+## Prévisions (à l'intérieur des valeurs connues)
+
+```{r}
+rbind(
+  min = sapply(usa[c('Population', 'Murder', 'HS.Grad', 'Frost')], min),
+  max = sapply(usa[c('Population', 'Murder', 'HS.Grad', 'Frost')], max))
+```
+
+##
+
+```{r}
+predict(mod0X, 
+  data.frame(
+    Murder = 8,  
+    HS.Grad = 55, 
+    Frost = 80, 
+    Population = 4250), 
+  interval = "prediction",
+  level = 0.95)
+```
+
+## Etude des résidus
+
+```{r, fig.width=10, fig.height=5}
+par(mfrow = c(2, 2))
+plot(mod0X)
+```
+
+## dépendance entre variables explicatives (colinéarité)
+
+```{r}
+library(car)
+vif(mod0X)
+```
+
+Variance Inflation Factors (VIF) < 10 : ok !
+
+# Reg. lin. multiple {data-background=#273142}
+
+## Modèle
+
+$y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p + \epsilon_i$
+
+$y = \sum_{j=1}^{p}\beta_jx_j+\epsilon$
+
+$y$ : variable quantitative continue à expliquer.
+
+$x_i$ : variables quantitatives continues explicatives.
+
+$\epsilon$ : erreur aléatoire de loi Normale d'espérance nulle et d'écart-type $\sigma$.
+
+## Avec R
+
+fonction `lm()`
+
+résultats avec `summary()`
+
+graphiques pour vérifier les hypothèses avec `plot(lm())`
+
+tests statistiques comme `shapiro.test()` pour la normalité des résidus
+
+# Reg. lin. multiple et sélection des variables {data-background=#273142}
+
+## Colinéarité
+
+Si une (ou plusieurs) variable explicative est la combinaison linéaire d'une (ou de plusieurs) autre varaible, on parle de colinéarité. Dans ce cas, les coéficients individuels associés à chaque variable ne peuvent être interprétés de manière fiable...
+
+## Détecter la colinéarité (données)
+
+```{r}
+set.seed(12345678)
+xx <- sample(1:100, size = 100, replace = TRUE) 
+df <- data.frame(
+  sapply(
+    1:10, 
+    function(i){
+      if(sample(c(TRUE, FALSE), size = 1)){
+        xx + rnorm(100, sd = 10)
+      }else{
+        xx + rnorm(100, sd = 100)
+      }
+    })
+)
+colnames(df) <- paste0("x", 1:10)
+df$y <- 0.5 + 
+  0.5*df$x1 + rnorm(100, mean = df$x1, sd = 10) + 
+  0.8*df$x2 + rnorm(100, mean = df$x1, sd = 10) + 
+  0.3*df$x3 + rnorm(100, mean = df$x1, sd = 10) + 
+  0.5*df$x4 + rnorm(100, mean = df$x1, sd = 10) + 
+  rnorm(100, mean = 0, sd = 150)
+```
+
+## Détecter la colinéarité (données)
+
+```{r}
+head(df)
+```
+
+## Détecter la colinéarité (données)
+
+On devrait s'attendre à un effet significatif de x1, x2, x3 et x4.
+
+## Détecter la colinéarité (données)
+
+```{r}
+modL <- lm(y~., data = df)
+summary(modL)
+```
+
+## Détecter la colinéarité (1)
+
+Avec la corrélation entre variables explicatives :
+
+```{r}
+library("corrplot")
+library("RColorBrewer")
+```
+
+## Détecter la colinéarité (1)
+
+```{r, fig.width=10, fig.height=5}
+corrplot.mixed(cor(df[,1:10]), upper.col = rev(brewer.pal(10, "Spectral")))
+```
+
+## Détecter la colinéarité (2)
+
+En comparant le carré de la corrélation au R² (règle de Klein) : 
+
+```{r}
+cor(df[,1:10])^2 > summary(modL)$r.squared
+```
+
+## Détecter la colinéarité (3)
+
+Le signe de la corrélation et de l'estimateur doivent êtr eles mêmes :
+
+```{r}
+cbind(coef = modL$coef[2:11], corr = cor(df)[1:10,"y"])
+```
+
+## Détecter la colinéarité (4)
+
+La façon recommandée : utiliser les facteurs d'infaltion VIF (Variance Inflation Factors)
+
+```{r}
+library("car")
+vif(modL)
+```
+
+## Détecter la colinéarité (4)
+
+```{r}
+excludeVar <- names(vif(modL)[vif(modL) > 10])
+print(excludeVar)
+```
+
+## Détecter la colinéarité (4)
+
+```{r}
+myForm <- paste0("y ~ . -", paste0(excludeVar, collapse = "-"), "")
+modL2 <- lm(eval(parse(text = myForm)), data = df)
+```
+
+## Détecter la colinéarité (4)
+
+```{r}
+summary(modL)
+```
+
+## Détecter la colinéarité (4)
+
+```{r}
+summary(modL2)
+```
+
+##
+
+```{r}
+modL3 <- step(
+  lm(y ~ ., data = df), 
+  direction = "backward"
+)
+```
+
+##
+
+```{r}
+summary(modL3)
+```
+
+##
+
+Quand des variables sont corrélées, il faut penser à une méthode pour sélectionner ses données (Cf. exemple données spatialisées en écologie).
+
+# <a href = "R054_regLin_TD07.html"> TD 7 : prédire la température </a> {data-background=#273142}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

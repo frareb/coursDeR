@@ -1,0 +1,163 @@
+---
+title: "<small>Module R’Stat1 : TD01</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# TD01_1 : l'âge et le genre à l'IRD ;-) {data-background=#273142}
+
+## Objectifs
+
+* Créer un objet `bdd` avec 2500 employés et les colonnes :
+  - `prenoms` depuis le fichier "Prenoms.csv" au hasard pondéré par la fréquence
+  - `noms` depuis le fichier "patronymes.csv" au hasard pondéré par la fréquence
+  - `genre` depuis le fichier "Prenoms.csv"
+  - `dateN` une date de naissance entre 1955 et 2002 pour calculer l'âge
+
+https://www.data.gouv.fr/fr/datasets/liste-de-prenoms-et-patronymes/
+  
+## Méthodes
+
+1- Lister les différentes étapes
+
+2- Se mettre d'accord sur les étapes
+
+3- ... et enfin coder en R
+
+## Etape 01 : lire les fichiers sources
+
+```{r}
+bddPrenoms <- read.table("./DATA/Prenoms.csv", 
+  header = TRUE, sep = ";", dec = ".")
+bddNoms <- read.table("./DATA/patronymes.csv", 
+  header = TRUE, sep = ",", dec = ".")
+```
+
+## Etape 01 : lire les fichiers sources
+
+```{r}
+head(bddPrenoms)
+head(bddNoms)
+```
+
+## Etape 02 : sélectionner les prénoms et genres
+
+```{r}
+myIndex <- seq(from = 1, to = nrow(bddPrenoms), by = 1)
+mySample <- 
+  as.character(
+    sample(
+      myIndex, 
+      size = 2500, 
+      replace = TRUE, 
+      prob = bddPrenoms[,4]))
+bdd <- bddPrenoms[mySample, c(1, 2)]
+colnames(bdd) <- c("prenoms", "genre")
+bdd$genre[
+  bdd$genre == "m,f" | bdd$genre == "f,m"] <- 
+  sample(c("f","m"), size = 1)
+```
+
+## Etape 02 : sélectionner les prénoms et genres
+
+```{r}
+head(bdd)
+```
+
+## Etape 03 : sélectionner les noms
+
+```{r}
+bdd$noms <- sample(bddNoms[,1], size = nrow(bdd), prob = bddNoms[,2])
+bdd <- data.frame(
+  prenoms = bdd$prenoms, 
+  noms = bdd$noms,
+  genre = bdd$genre)
+```
+
+## Etape 04 : sélectionner une date de naissance
+
+```{r}
+bdd$dateN = sample(
+  seq(
+    from = as.Date("01/01/1955", format = "%d/%m/%Y"),
+    to = as.Date("01/01/2001", format = "%d/%m/%Y"), 
+    by = 1
+    ), 
+  size = nrow(bdd),
+  replace = TRUE)
+```
+
+## Etape 04 : sélectionner une date de naissance
+
+```{r}
+head(bdd)
+```
+
+## Etape 05 : vérifier la structure des données
+
+```{r}
+str(bdd)
+```
+
+## Etape 05 : vérifier la structure des données
+
+```{r}
+bdd$genre <- droplevels(bdd$genre)
+```
+
+## Etape 05 : vérifier la structure des données
+
+```{r}
+str(bdd)
+```
+
+# TD01_2 : l'âge et le genre à l'IRD ;-) {data-background=#273142}
+
+## Objectifs
+
+* Avec notre objet `bdd` :
+  - calculer l'âge des employés et faire une colonne `age`
+  - calculer le nombre de départ à la retraite pour les 10 prochaines années (65 ans)
+  - faire des représentations graphiques
+  - faire la même chose par genre
+  
+## Etape 06 : calculer l'âge
+
+```{r}
+bdd$age <- floor(as.numeric(Sys.Date() - bdd$dateN)/365)
+head(bdd)
+```
+
+## Etape 07 : départs
+
+```{r}
+ageDepart <- 65 - bdd$age
+nbrDeparts <- table(ageDepart[ageDepart <= 10])
+print(nbrDeparts)
+```
+
+## Etape 07 : départs
+
+```{r, fig.width = 10, fig.height = 5}
+barplot(nbrDeparts)
+```
+
+## Etape 08 : départs par genre
+
+```{r}
+nbrDepartsGenre <- table(
+  ageDepart[ageDepart <= 10], 
+  bdd$genre[ageDepart <= 10])
+print(nbrDepartsGenre)
+```
+
+## Etape 08 : départs par genre
+
+```{r, fig.width = 10, fig.height = 5}
+barplot(t(nbrDepartsGenre), legend.text = TRUE)
+```
+
+
+# <a href = "R012_intro.html"> SUIVANT </a> {data-background=#273142}

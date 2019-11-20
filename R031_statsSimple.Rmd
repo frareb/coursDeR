@@ -1,0 +1,353 @@
+---
+title: "<small>Module R’Stat1 : Statistiques simples</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-SA 3.0</small></p>
+subtitle: ""
+---
+
+# Intervalles de Confiance {data-background=#273142}
+<!-- https://perso.univ-rennes1.fr/denis.poinsot/Statistiques_%20pour_statophobes/R%20pour%20les%20statophobes.pdf -->
+
+## Intervalles de Confiance d'une moyenne, loi normale
+
+* ma variable suit une loi normale
+* ou si mon échantillon est de grande taille (n > 30)
+
+=> cas particulier d'un test de conformité du test de Student
+
+## IC, loi normale
+
+```{r}
+xi <- rnorm(mean = 10, sd = 4, n = 100)
+t.test(xi, conf.level = 0.95)$conf.int
+```
+
+## Intervalles de confiance d'une moyenne, loi non normale
+
+* ma variable ne suit pas une loi normale
+* ou mon échantillon est petit
+
+=> test de conformité de Wilcoxon sur la médiane
+
+## IC, loi non normale
+
+```{r}
+xi <- sample(60:140, size = 15)/10
+wilcox.test(xi, conf.int = TRUE, conf.level = 0.95)$conf.int
+```
+
+## Intervalles de confiance d'un pourcentage
+
+=> test binomial
+
+```{r}
+# 73 individus mâles, sur 153 individus (théoriquement 50%)
+binom.test(x = 73, n = 153, p = 0.5)$conf.int
+```
+
+## Intervalles de confiance : les autres cas
+
+=> bootstrap
+
+```{r}
+xi <- rpois(n = 100, lambda = 100)
+print(xi)
+```
+
+## IC, bootstrap
+
+```{r}
+bs <- sapply(1:100, function(i){
+  mean(sample(xi, size = 10, replace = TRUE))
+})
+head(bs)
+```
+
+## IC, bootstrap
+
+```{r}
+sort(bs)[c(25, 95)]
+```
+
+# <a href = "R032_statsSimple_TD03.html"> TD3 </a> {data-background=#273142}
+
+# Comparaison d’une moyenne à une référence {data-background=#273142}
+
+## Comp. ref
+
+Les notes des étudiants à un examen par rapport à la moyenne nationale, le taux de glycémie d'un groupe de patient par rapport à la normale, ... On cherche à comparer la moyenne d'une série de mesures avec une valeur théorique ou une norme.
+
+## Comp. ref - CAS 1
+
+* Une population suivant une loi Normale de moyenne $\mu = 50$ et d'écart-type $\sigma = 10$. 
+* Un échantillon de 37 individus, avec une moyenne de $\overline{x}_{obs}=54$.
+
+H0 : La moyenne est égale à la valeur théorique
+
+H1 : La moyenne n'est pas égale à la valeur théorique (soit plus petite, soit plus grande ; bilatéral)
+
+## Comp. ref - CAS 1
+
+La "vraie" moyenne se distribue autour de 50 celon une loi Normale d'écart type 10. L'écart entre la moyenne de l'échantillon et 50 doit être à l'intérieur d'un intervalle à définir en fonction d'un risque $\alpha$. 
+
+Les bornes sont les quantiles d'ordre $\alpha/2$ et $1-\alpha/2$ de la statistiwue $\overline{X}_n$.
+
+On fixe $\alpha = 5%$.
+
+## Comp. ref - CAS 1
+
+$\overline{X}_n \sim \mathcal{N}(50 ; 10/\sqrt{37})$
+
+forme centrée réduite :
+
+$Z_n = \frac{\overline{X}_n - 50}{10/\sqrt{37}} \sim \mathcal{N}(0,1)$
+
+## Comp. ref - CAS 1
+
+$bornes = 50 \pm z_{1-\alpha/2} * 10/\sqrt{37}$
+
+```{r}
+qnorm(0.975)
+bSup <- 50 + qnorm(0.975) * 10 / sqrt(37)
+bInf <- 50 - qnorm(0.975) * 10 / sqrt(37)
+print(paste0("[", round(bInf, digits = 2), " ; ", 
+  round(bSup, digits = 2), "]"))
+findInterval(x = 54, vec = c(-Inf, bInf, bSup, Inf)) == 2
+```
+
+## Comp. ref - CAS 1
+
+Dans la plupart des cas, l'écart type de la population est inconnu.
+
+* L'écart type doit être estimé à partir de l'échantillon
+* Pour les bornes, on substitue la loi Normale par la loi de Student
+
+## Comp. ref - CAS 2
+
+```{r}
+ech <- rnorm(37, mean = 54, sd = 10)
+sd(ech) # écart type estimé
+```
+
+$\mathcal{T}_n = \frac{\overline{X}_n - 50}{S^*_n/\sqrt{37}}$ 
+
+$\mathcal{T}_n$ suit un loi de Student avec un paramètre $\nu$ ("nu") égal à $n-1$ (36), nombre de degrés de liberté.
+
+## Comp. ref - CAS 2
+
+$bornes = \mu_0 \pm t_{1-\alpha/2} * s^*/\sqrt{n}$
+
+```{r}
+bInf <- 50 - qt(0.975, df = length(ech) - 1) * sd(ech)/sqrt(length(ech))
+bSup <- 50 + qt(0.975, df = length(ech) - 1) * sd(ech)/sqrt(length(ech))
+print(paste0("[", round(bInf, digits = 2), " ; ", 
+  round(bSup, digits = 2), "]"))
+print(mean(ech))
+findInterval(x = mean(ech), vec = c(-Inf, bInf, bSup, Inf)) == 2
+```
+
+## Comp. ref - CAS 2
+
+```{r}
+t.test(ech, mu = 50, alternative = "two.sided")
+```
+
+## Comp. ref - CAS 2
+
+```{r}
+t <- (mean(ech) - 50) / (sd(ech) / sqrt(length(ech)))
+df <- length(ech) - 1
+pvalue <- 2 * pt(-abs(t), df = df)
+paste("t:", t)
+paste("df:", df)
+paste("p-value:", pvalue)
+```
+
+## Comp. ref - CAS 2
+
+```{r}
+t.test(ech, mu = 50, alternative = "less")
+```
+
+## Comp. ref - CAS 2
+
+```{r}
+t.test(ech, mu = 50, alternative = "greater")
+```
+
+# <a href = "R033_statsSimple_TD04.html"> TD4 </a> {data-background=#273142}
+
+# Comparaison d’une moyenne à une référence (suite) {data-background=#273142}
+
+## Comp. ref - CAS 3
+
+Si n est petit (<30) et que la distribution des données n'est pas normale, il faut utiliser un test non paramétrique en substitut au test de Student : c'est le test de Wilcoxon.
+
+```{r}
+wilcox.test(ech, mu = 50, alternative = "two.sided")
+```
+
+# Comparaison de groupes {data-background=#273142}
+
+## Comp. gp - CAS 1
+
+Les moyennes sont indépendantes. Par exemple la taille d'individus dans un pays à comparer avec un autre pays. Un contre exemple, la taille de plantes à 10 jours et à 20 jours : la taille à 20 jours va dépendre de la taille déjà atteinte à 10 jours. Un autre cas classique de non-indépendance est la mesure d'individus avant et après un traitement. **Dans ce qui va suivre les mesures doivent être indépendantes, normallement distribuées, et de variance égales (homoscédasticité)**. 
+
+## Comp. gp - CAS 1
+
+Avec des individus A et B et $S^2$ un indicateur de la variance globale : 
+
+$t = \frac{m_A - m_B}{\sqrt{\frac{S^2}{n_A}+\frac{S^2}{nB}}}$
+
+$S^2 = \frac{\sum{(x-m_A)^2}+\sum{(x-m_B)^2}}{n_A+n_B-2}$
+
+$df = n_A + n_B - 2$
+
+## Comp. gp - CAS 1
+
+```{r}
+gpA <- rnorm(100)
+gpB <- rnorm(100)
+s2 <- (sum((gpA - mean(gpA))^2) + sum((gpB - mean(gpB))^2)) / 
+  (length(gpA) + length(gpB) - 2)
+t <- (mean(gpA) - mean(gpB))/sqrt(s2/length(gpA) + s2/length(gpB))
+df <- length(gpA) + length(gpB) - 2
+print(t)
+print(df)
+```
+
+## Comp. gp - CAS 1
+
+```{r}
+t.test(gpA, gpB, var.equal = TRUE)
+```
+
+## Comp. gp - CAS 2
+
+Si la variance n'est pas la même (cas par défault pour le `t.test()` avec R), alors il faut utiliser le test de Welch (avec $S_A$ et $S_B$ les écart types de A et B) : 
+
+$t = \frac{m_A - m_B}{\sqrt{\frac{S_A^2}{n_A}+\frac{S_B^2}{nB}}}$
+
+$df = (\frac{S_A^2}{n_A}+\frac{S_B^2}{n_B^2})^2 / (\frac{S_A^4}{n_A^2(n_A-1)}+\frac{S_B^4}{n_B^2(n_B-1)})$
+
+## Comp. gp - CAS 2
+
+```{r}
+gpA <- rnorm(100)
+gpB <- rnorm(100)
+sA <- sd(gpA)
+sB <- sd(gpB)
+t <- (mean(gpA) - mean(gpB))/sqrt(sA^2/length(gpA) + sB^2/length(gpB))
+df <- ((sA^2/length(gpA) + sB^2/length(gpB))^2) / 
+  (sA^4/(length(gpA)^2*(length(gpB)-1)) 
+    + sB^4/(length(gpA)^2*(length(gpB)-1)))
+print(t)
+print(df)
+```
+
+## Comp. gp - CAS 2
+
+```{r}
+t.test(gpA, gpB)
+```
+
+## Comp. gp - CAS 2
+
+En pratique on peut utiliser le test de Student de Welch dans tous les cas car il est plus robuste. [Plus d'information sur le site de Wikipedia](https://en.wikipedia.org/wiki/Welch%27s_t-test).
+
+## Comp. gp - CAS 2
+
+```{r, fig.width = 10, fig.height = 5}
+boxplot(gpA, gpB, names = c("gpA", "gpB"))
+```
+
+## Comp. gp - CAS 3
+
+Quand les données des groupes ne sont pas distribuées selon une loi Normale.
+
+=> Test de Wilcoxon
+
+## Comp. gp - CAS 3
+
+```{r, fig.width = 5, fig.height = 4}
+# Données adaptées de http://www.sthda.com
+women_weight <- c(38.9, 61.2, 73.2, 21.8, 
+  63.4, 64.6, 48.4, 48.8, 48.5)
+men_weight <- c(67.8, 60, 63.5, 76, 89.4, 
+  73.3, 67.3, 61.3, 62.4) 
+boxplot(women_weight, men_weight, names = c("W", "M"))
+```
+
+## Comp. gp - CAS 3
+
+```{r, warnings = TRUE}
+wilcox.test(women_weight, men_weight, 
+  alternative = "two.sided")
+```
+
+## Comp. gp - CAS 4
+
+Qaund les données ne sont pas indépendantes !
+
+On calcule la différence entre chaque données appariées (`d`), on vérifie que la distribution de `d` suit une loi Normale. Si la différence moyenne (`m`) est proche de 0, alors il n'y a pas de différence entre les données.
+
+$t = \frac{m}{s/\sqrt{n}}$
+
+$df=n-1$
+
+## Comp. gp - CAS 4
+
+```{r, eval = FALSE}
+gpA <- rnorm(30)
+gpB <- gpA + rnorm(30)
+dfGp <- data.frame(gpA = gpA, gpB = gpB)
+
+par(mfrow = c(1, 2))
+boxplot(gpA, gpB)
+trash <- lapply(seq_along(gpA), function(i){
+  points(x = 1:2, y = dfGp[i,], type = 'b', pch = 16)
+})
+
+hist(gpA - gpB, main = "")
+```
+
+## Comp. gp - CAS 4
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+gpA <- rnorm(30)
+gpB <- gpA + rnorm(30)
+dfGp <- data.frame(gpA = gpA, gpB = gpB)
+
+par(mfrow = c(1, 2))
+boxplot(gpA, gpB, names = c("avant", "après"))
+trash <- lapply(seq_along(gpA), function(i){
+  points(x = 1:2, y = dfGp[i,], type = 'b', pch = 16)
+})
+
+hist(gpA - gpB, main = "")
+```
+
+## Comp. gp - CAS 4
+
+```{r}
+t.test(gpA, gpB, paired = TRUE, 
+  alternative = "two.sided")
+```
+
+## Comp. gp - CAS 5
+
+Quand la distribution de la différence entre groupes non-indépendants ne suit pas une loi Normale.
+
+=> Wilcoxon
+
+## Comp. gp - CAS 5
+
+```{r}
+wilcox.test(gpA, gpB, 
+  alternative = "two.sided")
+```
+
+# <a href = "R034_statsSimple_TD05.html"> TD5 </a> {data-background=#273142}
+
+# <a href = "R041_modLin.html"> Analyse de variance et le modèle linéaire </a>

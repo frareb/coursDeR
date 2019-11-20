@@ -1,0 +1,224 @@
+---
+title: "<small>Module R’Stat1 : TD04</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# TD04 : comp. ref. {data-background=#273142}
+
+## Objectifs
+
+* A partir de moyennes de référence pour chaque mois de l'année, combien de jours par mois ont une température significativement différente de la référence ?
+
+Mois | Référence | Mois | Référence
+--|--|--|--
+Jan | 1.6 | Juil | 22.0
+Fev | 4.3 | Aout | 19.8
+Mar | 7.5 | Sep | 15.9
+Avr | 11.0 | Oct | 6.4
+Mai | 12.7 | Nov | 5.4
+Juin | 19.4 | Dec | 3.9
+
+
+## Etape 01 : charger les données
+
+```{r}
+bdd <- read.table("./DATA/bdd.csv", header = TRUE, sep = ",", dec = ".")
+head(bdd)
+```
+
+## Etape 02 : mettre les valeurs de référence dans un vecteur
+
+```{r}
+myRef <- c(1.6, 4.3, 7.5, 11.0, 12.7, 19.4, 
+  22.0, 19.8, 15.9, 6.4, 5.4, 3.9)
+```
+
+## Etape 03 : séparer les valeurs de température par mois
+
+```{r}
+bddM <- split(bdd[c("day", "temperature")], f = bdd$month)
+```
+
+## Etape 04 : séparer les valeurs de température par mois par jour
+
+```{r}
+bddMD <- lapply(seq_along(bddM), function(i){
+  split(bddM[[i]]$temperature, f = bddM[[i]]$day)
+})
+```
+
+## Etape 05 : vérifier le nombre de jours par mois
+
+```{r}
+length(bddMD)
+sapply(bddMD, length)
+```
+
+=> nous n'avons pas assez de données pour septembre et octobre au moment où j'écris ce cours... Le problème sera résolu si je pense à faire une extraction de la base le 21 octobre :-)
+
+## Etape 06 : pour chaque jour de chaque mois, comparer les valeurs de température à la référence du mois
+
+```{r, eval = FALSE}
+for(monMois in 1:12){
+  for(monJour in 1:sapply(bddMD, length)[monMois])
+    t.test(bddMD[[monMois]][[monJour]], mu = myRef[monMois])
+}
+```
+
+=> cela fonctionne mais nous souhaitons récupérer les données !!!
+
+## Etape 06
+
+```{r}
+pvalMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    t.test(bddMD[[i]][[j]], mu = myRef[i])$p.value
+  })
+})
+print(pvalMois)
+```
+
+## Etape 07 : compter les p-value inférieure à 0.05 (dif. sign.)
+
+```{r}
+sapply(pvalMois, function(i){
+  sum(i < 0.05)
+})
+```
+
+## Etape 08 : conclusion
+
+Presque tous les jours ont une moyenne significativement différente de la valeur de référence mensuelle.
+
+La valeur de référence mensuelle serait un très mauvais indicateur de la température des jours au sein d'un mois ?
+
+## Etape 09 : rep. graph.
+
+```{r, eval = FALSE}
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(x = rep(1:12, sapply(meanMois, length)), 
+  y = unlist(meanMois), pch = '+')
+```
+
+## Etape 09 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(x = rep(1:12, sapply(meanMois, length)), 
+  y = unlist(meanMois), pch = '+')
+```
+
+## Etape 09 : rep. graph.
+
+```{r, eval = FALSE}
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", ylim = c(0, 40), 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(
+  x = rep(1:12, sapply(meanMois, length)) + 
+    rnorm(length(unlist(meanMois)), sd = 0.05), 
+  y = unlist(meanMois), pch = 1)
+```
+
+## Etape 09 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", ylim = c(0, 40), 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(
+  x = rep(1:12, sapply(meanMois, length)) + 
+    rnorm(length(unlist(meanMois)), sd = 0.05), 
+  y = unlist(meanMois), pch = 1)
+```
+
+## Etape 09 : rep. graph.
+
+```{r, eval = FALSE}
+isSign <- unlist(pvalMois)
+myCol <- vector(mode = "character", length = length(isSign))
+myCol[isSign < 0.05] <- "red"
+myCol[isSign >= 0.05] <- "green"
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", ylim = c(0, 40), 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(
+  x = rep(1:12, sapply(meanMois, length)) + 
+    rnorm(length(unlist(meanMois)), sd = 0.06), 
+  y = unlist(meanMois), pch = 16, col = myCol)
+```
+
+## Etape 09 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+isSign <- unlist(pvalMois)
+myCol <- vector(mode = "character", length = length(isSign))
+myCol[isSign < 0.05] <- "red"
+myCol[isSign >= 0.05] <- "green"
+meanMois <- sapply(seq_along(bddMD), function(i){
+  sapply(seq_along(bddMD[[i]]), function(j){
+    mean(bddMD[[i]][[j]])
+  })
+})
+plot(x = 1:12, y = myRef, axes = FALSE,
+  pch = "-", cex = 5, xlab = "", ylim = c(0, 40), 
+  ylab = "Mean temperature (°C)")
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+points(
+  x = rep(1:12, sapply(meanMois, length)) + 
+    rnorm(length(unlist(meanMois)), sd = 0.06), 
+  y = unlist(meanMois), pch = 16, col = myCol)
+```
+
+## Etape 10 : conclusion (suite)
+
+Presque tous les jours ont une moyenne significativement différente de la valeur de référence mensuelle.
+
+La valeur de référence mensuelle serait un très mauvais indicateur de la température des jours au sein d'un mois ?
+
+**Plutôt que de comparer la moyenne de chaque jour à la valeur de référence mensuelle, que pourrions-nous tester ?**
+
+# <a href = "R031_statsSimple.html"> RETOUR AU COURS </a> {data-background=#273142}

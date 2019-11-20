@@ -1,0 +1,487 @@
+---
+title: "<small>Module R’Stat1 : TD03</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# TD03 : IC95% {data-background=#273142}
+
+## Objectifs
+
+* Calculer pour chaque mois de l'année la moyenne et son intervalle de confiance sur la température entre 8h et 9h du matin
+* Nous utiliserons les données de bdd.csv
+* Faire une représentation graphique
+* Ajouter les quartiles à 25 et 75%
+
+## Etape 01 : charger les données
+
+```{r}
+bdd <- read.table("./DATA/bdd.csv", header = TRUE, sep = ",", dec = ".")
+head(bdd)
+```
+
+## Etape 02 : faire une liste avec pour chaque mois les températures entre 8 et 9h
+
+```{r}
+bdd8list <- split(
+  bdd$temperature[bdd$hour == 8], 
+  f = bdd$month[bdd$hour == 8])
+```
+
+## Etape 02 : faire une liste avec pour chaque mois les températures entre 8 et 9h
+
+```{r}
+str(bdd8list)
+```
+
+## Etape 03 : calculer la moyenne + IC95%
+
+```{r}
+resCI95 <- sapply(seq_along(bdd8list), function(i){
+  ci <- t.test(bdd8list[[i]], conf.level = 0.95)$conf.int
+  moy <- mean(bdd8list[[i]])
+  return(c(moy, ci))
+})
+colnames(resCI95) <- names(bdd8list)
+rownames(resCI95) <- c("moy", "CI-", "CI+")
+```
+
+## Etape 03 : calculer la moyenne + IC95%
+
+```{r}
+print(resCI95)
+```
+
+## Etape 04 : représentation graphique
+
+```{r, eval = FALSE}
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, panel.first = {
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+```
+
+## Etape 04 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, panel.first = {
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+```
+
+## Etape 04 : rep. graph.
+
+```{r, eval = FALSE}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1)
+axis(2)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1)
+axis(2)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, eval = FALSE}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, eval = FALSE}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = 1)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = 1)
+```
+
+## Etape 04 : rep. graph.
+
+```{r, eval = FALSE}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = c(1, 1, 2, 4, 4, 2, 3, 1, 4, 1, 1, 1))
+```
+
+## Etape 04 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = c(1, 1, 2, 4, 4, 2, 3, 1, 4, 1, 1, 1))
+```
+
+## Etape 05 : quartiles
+
+```{r}
+resCI95 <- sapply(seq_along(bdd8list), function(i){
+  ci <- t.test(bdd8list[[i]], conf.level = 0.95)$conf.int
+  moy <- mean(bdd8list[[i]])
+  qq <- quantile(bdd8list[[i]], probs = c(0.25, 0.75))
+  return(c(moy, ci, qq))
+})
+colnames(resCI95) <- names(bdd8list)
+rownames(resCI95) <- c("moy", "CI-", "CI+", "q1", "q3")
+```
+
+## Etape 05 : quartiles
+
+```{r}
+print(resCI95)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, eval = FALSE}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[4, ], rev(resCI95[5, ])), 
+      col = "salmon", border = NA)
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = c(1, 1, 2, 4, 4, 2, 3, 1, 4, 1, 1, 1))
+```
+
+## Etape 06 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+par(mar = c(4, 4, 1, 1))
+plot(x = 1:12, y = resCI95[1, ], ylim = c(0, 25),
+  xlab = "Month", ylab = "Temperature from 8:00 to 8:59 (°C)",
+  type = "l", lwd = 2, axes = FALSE, panel.first = {
+    grid()
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[4, ], rev(resCI95[5, ])), 
+      col = "salmon", border = NA)
+    polygon(
+      x = c(1:12, 12:1), 
+      y = c(resCI95[2, ], rev(resCI95[3, ])), 
+      col = 2, border = NA)
+  })
+axis(1, at = 1:12, labels = month.abb, las = 3)
+axis(2)
+text(x = 1:12, y = resCI95[1, ], 
+  labels = round(resCI95[1, ]), 
+  pos = c(1, 1, 2, 4, 4, 2, 3, 1, 4, 1, 1, 1))
+```
+
+## Etape 06 : rep. graph.
+
+```{r, eval = FALSE}
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28))
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28))
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, eval = FALSE}
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, eval = FALSE}
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+abline(h = axTicks(2), col = "lightgray", lty = 2)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+abline(h = axTicks(2), col = "lightgray", lty = 2)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[2, ], 
+  cBar, resCI95[3, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+arrows(
+  cBar, resCI95[4, ], 
+  cBar, resCI95[5, ], 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, eval = FALSE}
+# error bars
+resCI95 <- sapply(seq_along(bdd8list), function(i){
+  ci <- t.test(bdd8list[[i]], conf.level = 0.95)$conf.int
+  moy <- mean(bdd8list[[i]])
+  qq <- quantile(bdd8list[[i]], probs = c(0.25, 0.75))
+  se <- sd(bdd8list[[i]]) / sqrt(length(bdd8list[[i]]))
+  return(c(moy, ci, qq, se))
+})
+colnames(resCI95) <- names(bdd8list)
+rownames(resCI95) <- c("moy", "CI-", "CI+", "q1", "q3", "se")
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+abline(h = axTicks(2), col = "lightgray", lty = 2)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[1, ] + resCI95[6, ]*2, 
+  cBar, resCI95[1, ] - resCI95[6, ]*2, 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+## Etape 06 : rep. graph.
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+resCI95 <- sapply(seq_along(bdd8list), function(i){
+  ci <- t.test(bdd8list[[i]], conf.level = 0.95)$conf.int
+  moy <- mean(bdd8list[[i]])
+  qq <- quantile(bdd8list[[i]], probs = c(0.25, 0.75))
+  se <- sd(bdd8list[[i]]) / sqrt(length(bdd8list[[i]]))
+  return(c(moy, ci, qq, se))
+})
+colnames(resCI95) <- names(bdd8list)
+rownames(resCI95) <- c("moy", "CI-", "CI+", "q1", "q3", "se")
+myColP100 <- round((resCI95[1, ] - min(resCI95[1, ])) / 
+  (max(resCI95[1, ]) - min(resCI95[1, ])) * 100 + 1)
+myPal <- colorRampPalette(c("blue", "red"))(101)
+myCol <- myPal[myColP100]
+cBar <- barplot(resCI95[1, ], axes = FALSE, 
+  names.arg = "", ylim = c(0, 28), col = myCol)
+abline(h = axTicks(2), col = "lightgray", lty = 2)
+axis(1, at = cBar, labels = month.abb, las = 3)
+axis(2)
+arrows(
+  cBar, resCI95[1, ] + resCI95[6, ]*2, 
+  cBar, resCI95[1, ] - resCI95[6, ]*2, 
+  lwd = 1.5, angle = 90,
+  code = 3, length = 0.05)
+```
+
+# <a href = "R031_statsSimple.html"> RETOUR AU COURS </a> {data-background=#273142}

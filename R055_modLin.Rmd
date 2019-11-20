@@ -1,0 +1,246 @@
+---
+title: "<small>Module R’Stat1 : La régression linéaire polynomiale</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Reg. lin. poly. : exemple {data-background=#273142}
+
+## Relation entre pression atmosphérique et température
+
+```{r}
+bdd <- read.table("./DATA/bdd.csv", header = TRUE, sep = ",", dec = ".")
+bdd$date <- as.POSIXct(
+  paste0(
+    bdd$year, "-", 
+    bdd$month, "-", 
+    bdd$day, " ", 
+    bdd$hour, ":", 
+    bdd$minute, ":", 
+    bdd$second), 
+  format = "%Y-%m-%d %H:%M:%S"
+)
+bdd$date <- as.numeric(bdd$date)
+set.seed(12345)
+sampleP <- sample(1:nrow(bdd), size = 1000)
+bdd <- bdd[sampleP, c("temperature", "pressure", "date")]
+str(bdd)
+```
+
+## 
+
+```{r, eval = FALSE}
+getNiceLmPlot <- function(myX, myY, myYlim = c(-10, 50)){
+  mod041 <- lm(myY ~ myX)
+  myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+  colRank <- (myY[!is.na(myX)] - predict(mod041))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+    col = myCol[colRank], pch = 16, 
+    axes = FALSE, ylim = myYlim, panel.first = {
+      grid()
+      axis(1)
+      axis(2)
+    })
+  points(
+    x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+    y = predict(mod041)[order(myX[!is.na(myX)])], 
+    type = 'l', lwd = 2)
+}
+getNiceLmPlot(
+  myX = bdd$pressure, 
+  myY = bdd$temperature)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=8}
+getNiceLmPlot <- function(myX, myY, myYlim = c(-10, 50)){
+  mod041 <- lm(myY ~ myX)
+  myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+  colRank <- (myY[!is.na(myX)] - predict(mod041))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+    col = myCol[colRank], pch = 16, 
+    axes = FALSE, ylim = myYlim, panel.first = {
+      grid()
+      axis(1)
+      axis(2)
+    })
+  points(
+    x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+    y = predict(mod041)[order(myX[!is.na(myX)])], 
+    type = 'l', lwd = 2)
+}
+getNiceLmPlot(
+  myX = bdd$pressure, 
+  myY = bdd$temperature)
+```
+
+## 
+
+```{r, eval = FALSE}
+getNicePolyLmPlot <- function(myX, myY, myYlim = c(-10, 50), polyN = 2){
+  mod041 <- lm(myY ~ poly(myX, polyN))
+  myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+  colRank <- (myY[!is.na(myX)] - predict(mod041))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+    col = myCol[colRank], pch = 16, 
+    axes = FALSE, ylim = myYlim, panel.first = {
+      grid()
+      axis(1)
+      axis(2)
+    })
+  points(
+    x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+    y = predict(mod041)[order(myX[!is.na(myX)])], 
+    type = 'l', lwd = 2)
+  return(mod041)
+}
+modPoly <- getNicePolyLmPlot(
+  myX = bdd$pressure, 
+  myY = bdd$temperature)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=8}
+getNicePolyLmPlot <- function(myX, myY, myYlim = c(-10, 50), polyN = 2){
+  mod041 <- lm(myY ~ poly(myX, polyN))
+  myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+  colRank <- (myY[!is.na(myX)] - predict(mod041))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+    col = myCol[colRank], pch = 16, 
+    axes = FALSE, ylim = myYlim, panel.first = {
+      grid()
+      axis(1)
+      axis(2)
+    })
+  points(
+    x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+    y = predict(mod041)[order(myX[!is.na(myX)])], 
+    type = 'l', lwd = 2)
+  return(mod041)
+}
+modPoly <- getNicePolyLmPlot(
+  myX = bdd$pressure, 
+  myY = bdd$temperature)
+```
+
+##
+
+```{r}
+summary(modPoly)
+```
+
+##
+
+```{r, fig.width=10, fig.height=4}
+par(mfrow = c(2, 2))
+plot(modPoly)
+```
+
+##
+
+On peut voir que quand la pression atmosphérique est basse, parfois la température reste basse, ce qui explique la distribution non Normale des résidus. Nous allons ignorer ce problème ici qui pourrait être résolu en conditionnant les valeurs de pression atmosphérique à certaines heures de la journée.
+
+```{r}
+# normalité résidus : problème !
+shapiro.test(resid(modPoly)) 
+```
+
+## autre exemple
+
+```{r, fig.width=10, fig.height=5}
+modPoly2 <- getNicePolyLmPlot(
+  myX = bdd$date, 
+  myY = bdd$temperature, 
+  polyN = 2)
+```
+
+##
+
+```{r}
+summary(modPoly2)
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+modPoly3 <- getNicePolyLmPlot(
+  myX = bdd$date, 
+  myY = bdd$temperature, 
+  polyN = 3)
+```
+
+##
+
+```{r}
+summary(modPoly3)
+```
+
+# Reg. lin. poly. {data-background=#273142}
+
+## Model
+
+$$Y=\beta_1 + \beta_2X + \beta_3x^2+...+\beta_px^p+\epsilon$$
+
+## 
+
+```{r, eval = FALSE}
+myX = bdd$date
+myY = bdd$temperature
+nbrDeg <- 4 # essayer avec 20 ;-)
+mod_X <- lapply(1:nbrDeg, function(i){
+  lm(myY ~ poly(myX, i))
+})
+plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+  col = "gray", pch = 16, 
+  axes = FALSE, ylim = c(-10, 50), panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+for(i in seq_along(mod_X))
+points(
+  x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+  y = predict(mod_X[[i]])[order(myX[!is.na(myX)])], 
+  type = 'l', lwd = 2, col = i)
+legend("topleft", lwd = 2, col = 1:length(mod_X), 
+  legend = paste0("Reg. Lin. Poly. deg. ", 1:nbrDeg))
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=7}
+myX = bdd$date
+myY = bdd$temperature
+nbrDeg <- 4
+mod_X <- lapply(1:nbrDeg, function(i){
+  lm(myY ~ poly(myX, i))
+})
+plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+  col = "gray", pch = 16, 
+  axes = FALSE, ylim = c(-10, 50), panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+for(i in seq_along(mod_X))
+points(
+  x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+  y = predict(mod_X[[i]])[order(myX[!is.na(myX)])], 
+  type = 'l', lwd = 2, col = i)
+legend("topleft", lwd = 2, col = 1:length(mod_X), 
+  legend = paste0("Reg. Lin. Poly. deg. ", 1:nbrDeg))
+```
+
+# <a href = "R061_ANCOVA.html"> ANCOVA </a> {data-background=#273142}

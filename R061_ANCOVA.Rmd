@@ -1,0 +1,230 @@
+---
+title: "<small>Module R’Stat1 : ANCOVA</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# ANCOVA {data-background=#273142}
+
+## 
+
+"*L’analyse de la covariance (ANCOVA) est une technique qui combine certaines des caractéristiques de l’analyse de la variance et de la régression linéaire.*
+*L’idée à la base de l’analyse de la covariance est d’ajouter à un modèle d’analyse de la variance, associé à une ou plusieurs variables qualitatives, une ou plusieurs variables quantitatives qui pourraient être liées à la réponse étudiée.*" Frédéric Bertrand Univ. de Technologie de Troyes
+
+## 
+
+Une covariable, c'est une variable quantitative qui est ajoutée au modèle d'ANOVA. Les covariables doivent avoir un lien avec la variable à expliquer, sinon cela n'apporte rien au modèle ANOVA. Par exemple si l'on s'intéressse à l'impact de diverses barres énergétiques sur les performances de sportifs, une covariable pourrait être l'âge des sportifs. La covariable doit être indépendante des traitements au risque de masquer les effets de ceux-ci. Il est bon de représenter graphiquement la covariable en fonction des facteurs pour le vérifier.
+
+## 
+
+En bref : ANCOVA = ANOVA + au moins une variable quantitative explicative
+
+# Données `mtcars` depuis *tutorialsPoint* {data-background=#273142}
+
+## Récupération des données
+
+```{r}
+data(mtcars)
+```
+
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+* mpg: Miles/(US) gallon
+* hp: Gross horsepower
+* am: Transmission (0 = automatic, 1 = manual)
+
+##
+
+```{r}
+mtcars <- mtcars[,c("am","mpg","hp")]
+mtcars$am <- as.factor(mtcars$am)
+str(mtcars)
+```
+
+## ANOVA
+
+```{r}
+modL <- aov(mtcars$mpg ~ mtcars$am)
+summary(modL)
+```
+
+## 
+
+```{r, eval = FALSE}
+plot(mtcars$mpg ~ mtcars$hp, 
+  col = mtcars$am, pch = 16)
+abline(lm(
+  mtcars$mpg[mtcars$am == "0"] ~
+  mtcars$hp[mtcars$am == "0"]), 
+  col = 1, lwd = 2)
+abline(lm(
+  mtcars$mpg[mtcars$am == "1"] ~
+  mtcars$hp[mtcars$am == "1"]), 
+  col = 2, lwd = 2)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=6}
+plot(mtcars$mpg ~ mtcars$hp, 
+  col = mtcars$am, pch = 16)
+abline(lm(
+  mtcars$mpg[mtcars$am == "0"] ~
+  mtcars$hp[mtcars$am == "0"]), 
+  col = 1, lwd = 2)
+abline(lm(
+  mtcars$mpg[mtcars$am == "1"] ~
+  mtcars$hp[mtcars$am == "1"]), 
+  col = 2, lwd = 2)
+```
+
+## ANCOVA
+
+```{r}
+modL2 <- aov(mtcars$mpg ~ mtcars$am * mtcars$hp)
+summary(modL2)
+```
+
+Pas d'effet significatif de l'interaction.
+
+##
+
+```{r}
+modL3 <- aov(mtcars$mpg ~ mtcars$am + mtcars$hp)
+summary(modL3)
+```
+
+##
+
+On compare les deux modèles : la simplification est justifiée.
+
+```{r}
+anova(modL2, modL3)
+```
+
+##
+
+On compare avec le modèle ANOVA : rédcution très forte du pouvoir explicatif du modèle sur la consommation si on enlève l'information de la puissance de la voiture. 
+
+```{r}
+anova(modL, modL3)
+```
+ 
+# Données `regrowth` depuis *The R Book* {data-background=#273142}
+
+## Récupération des données
+
+```{r}
+rg <- read.table("./DATA/ipomopsis.txt", header = TRUE)
+```
+
+* Root : taille de l'arbre
+* Fruit : récolte / rendement
+* Grazing : attaques par des animaux (herbivorie)
+
+## Graphiques
+
+```{r, eval = FALSE}
+plot(rg$Fruit ~ rg$Root, 
+  col = rg$Grazing, pch = 16)
+abline(lm(
+  rg$Fruit[rg$Grazing == "Grazed"] ~
+  rg$Root[rg$Grazing == "Grazed"]), 
+  col = 1, lwd = 2)
+abline(lm(
+  rg$Fruit[rg$Grazing == "Ungrazed"] ~
+  rg$Root[rg$Grazing == "Ungrazed"]), 
+  col = 2, lwd = 2)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=6}
+plot(rg$Fruit ~ rg$Root, 
+  col = rg$Grazing, pch = 16)
+abline(lm(
+  rg$Fruit[rg$Grazing == "Grazed"] ~
+  rg$Root[rg$Grazing == "Grazed"]), 
+  col = 1, lwd = 2)
+abline(lm(
+  rg$Fruit[rg$Grazing == "Ungrazed"] ~
+  rg$Root[rg$Grazing == "Ungrazed"]), 
+  col = 2, lwd = 2)
+```
+
+## 
+
+Il semblerait que les arbres attaqués donnent un meilleur rendement ?
+
+```{r, fig.width=4, fig.height=4}
+boxplot(rg$Fruit ~ rg$Grazing, border = 1:2)
+```
+
+## ANCOVA
+
+```{r}
+ancova <- aov(rg$Fruit ~ rg$Grazing * rg$Root)
+```
+
+## 
+
+```{r}
+# fort effet de la variable Root, pas d'interaction
+summary(ancova)
+```
+
+## 
+
+```{r}
+ancova2 <- aov(rg$Fruit ~ rg$Grazing + rg$Root)
+```
+
+## 
+
+```{r}
+summary(ancova2)
+```
+
+## 
+
+```{r}
+# ok pour supprimer l'interaction
+anova(ancova, ancova2)
+```
+
+## Est-ce que ne considérer que la taille de l'arbre ne serait pas suffisant ?
+
+```{r}
+ancova3 <- aov(rg$Fruit ~ rg$Root)
+```
+
+## 
+
+```{r}
+summary(ancova3)
+```
+
+## 
+
+```{r}
+# Non, il faut garder le modèle avec Grazing + Root
+anova(ancova2, ancova3)
+```
+
+## Vérification avec `step`
+
+```{r}
+step(ancova)
+```
+
+## Conclusion
+
+L'absence de covariable aurait conduit à une erreur d'interprétation, d'où l'importance du design expérimental. 
+
+# ANCOVA 2 facteurs : TD *The R Book* p 548 {data-background=#273142}
+
+# <a href = "R071_ts.html"> Les séries temporelles </a> {data-background=#273142}
+
+

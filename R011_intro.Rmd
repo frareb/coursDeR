@@ -1,0 +1,477 @@
+---
+title: "<small>Module R’Stat1 : Rappels (1/4)</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Rappels : environnement de travail {data-background=#273142}
+
+## R et EDI 
+
+Les principaux EDI et éditeurs de texte pour R : 
+
+![Les principaux EDI et éditeurs de texte pour R.](rEtEDI.png)
+
+# Rappels : la notion d'objet {data-background=#273142}
+
+## un objet ?
+
+```{r}
+monObjet <- 5
+monObjet = 5
+5 -> monObjet
+print(monObjet)
+monObjet <- 15
+print(monObjet)
+```
+
+Dans ce cours nous utiliserons toujours la forme `<-` par souci de consistance et aussi parce que c’est la forme la plus répandue.
+
+## (parenthèse sur le style)
+
+* le style *lowerCamelCase*
+* les espaces
+* l'indentation
+
+## un objet ?
+
+```{r}
+monObjet + 10
+monObjet * pi
+```
+
+## un objet ?
+
+FONCTION pour lister les objets : `ls()`
+
+```{r}
+ls()
+ls(pattern = "^m[a-zA-Z]*t$") # expression régulière
+ls(pattern = "^m[a-zA-Z]*x$")
+```
+
+## un objet ?
+
+```{r}
+monNomDeVariable <- "monObjet"
+assign(monNomDeVariable, value = 5)
+print(monObjet)
+```
+
+## un objet ?
+
+```{r}
+ls(pattern = "^spp[A-Z]$")
+mesEspeces <- c("sppA", "sppB", "sppC")
+mesDonnes  <- c(5, 7, 8) 
+for(i in seq_along(mesEspeces)){
+  assign(
+    mesEspeces[i], 
+    value = mesDonnes[i]
+  )
+}
+ls(pattern = "^spp[A-Z]$")
+```
+
+# Rappels : le répertoire de travail {data-background=#273142}
+
+## Mais où suis-je ?
+
+```{r}
+getwd()
+```
+
+## Définir son répertoire de travail
+
+```{r}
+myWD <- "./"
+setwd(myWD)
+getwd()
+```
+
+## Lister les fichiers
+
+```{r}
+list.files()
+```
+
+## Lister les fichiers
+
+```{r}
+list.files(pattern=".*\\.[rR]$")
+```
+
+```{r}
+list.files(pattern=".*\\.([rR]md)$")
+```
+
+## Lister les fichiers
+
+```{r}
+list.files(path = "./DATA", pattern=".*\\.(csv)$")
+```
+
+## Lire un fichier
+
+```{r, warning=TRUE, error=TRUE}
+read.table("Prenoms.csv", header = TRUE, sep = ";", dec = ".")
+```
+
+## Lire un fichier
+
+```{r}
+bdd <- read.table("./DATA/Prenoms.csv", header = TRUE, sep = ";", dec = ".")
+head(bdd)
+```
+
+## Lire un fichier
+
+```{r}
+# setwd("./DATA")
+# bdd <- read.table("Prenoms.csv", header = TRUE, sep = ";", dec = ".")
+head(bdd)
+```
+
+## Lire un fichier
+
+* csv
+* `header` nom des colonnes
+* pas de chiffre en début de nom de colonne
+* `spe` séparateur de champs
+* `dec` séparateur de décimales
+* `?read.table()` et csv, ...
+
+# Rappels : les types de données {data-background=#273142}
+
+## `numeric`
+
+* les nombres entiers (*integers*)
+* les nombres à virgule (*double*)
+
+Par défaut R considère tous les nombres comme des nombres à virgule et leur attribue le type `double`.
+
+## `numeric`
+
+```{r}
+nbrRep <- 5
+typeof(nbrRep)
+typeof(5.32)
+is.numeric(5)
+is.double(5)
+```
+
+## `numeric`
+
+```{r}
+nbrRep <- as.integer(5)
+typeof(nbrRep)
+typeof(5.32)
+typeof(as.integer(5.32))
+```
+
+## `numeric`
+
+```{r}
+as.integer(5.32)
+as.integer(5.99)
+is.numeric(nbrRep)
+```
+
+## `numeric`
+
+```{r}
+aNum <- 5.425675612
+round(aNum)
+round(aNum, digits = 3)
+ceiling(aNum)
+floor(aNum)
+```
+
+## `numeric`
+
+```{r}
+dateNaissance <- as.Date("01/02/1970", format = "%d/%m/%Y")
+dateAujourdhui <- Sys.Date()
+age <- as.numeric(dateAujourdhui - dateNaissance)/365
+print(age)
+print(floor(age))
+```
+
+## `character` (texte)
+
+```{r}
+myText <- "azerty"
+myText2 <- 'azerty'
+myText3 <- 'azerty uiop qsdfg hjklm'
+typeof(myText3)
+```
+
+
+## `character`
+
+```{r}
+myText <- "a 'ze' 'rt' y"
+myText2 <- 'a "zert" y'
+myText3 <- 'azerty uiop qsdfg hjklm'
+myText4 <- "qwerty \" azerty "
+myText5 <- "qwerty \\ azerty "
+```
+
+## `character`
+
+```{r}
+myText <- "5"
+# myText + 10 
+# Error in myText + 10 : non-numeric argument to binary operator
+```
+
+## `factor`
+
+```{r}
+factor01 <- factor("aaa")
+print(factor01)
+typeof(factor01)
+is.factor(factor01)
+levels(factor01)
+```
+
+## `factor`
+
+```{r}
+factor01 <- factor("aaa")
+as.character(factor01)
+as.numeric(factor01)
+```
+
+## `logical`
+
+```{r}
+aLogic <- TRUE
+print(aLogic)
+typeof(aLogic)
+is.logical(aLogic)
+```
+
+## `logical`
+
+```{r}
+aLogic + 1
+as.numeric(aLogic)
+as.character(aLogic)
+```
+
+## `logical`
+
+```{r}
+TRUE == TRUE
+TRUE > FALSE
+1 == TRUE
+0 == FALSE
+```
+
+## `logical`
+
+```{r}
+TRUE + 1
+FALSE + 1
+(FALSE + 1) == TRUE
+```
+
+## `logical`
+
+```{r}
+T == TRUE
+F == FALSE
+T == 1
+F == 0
+(F + 1) == TRUE
+```
+
+## `NA`
+
+Absence de données ou données manquantes
+
+## `NA`
+
+```{r}
+print(NA)
+typeof(NA)
+typeof(as.integer(NA))
+typeof(as.character(NA))
+```
+
+## `NA`
+
+```{r}
+NA == TRUE
+NA == FALSE
+NA > 1
+NA + 1
+```
+
+## `Date` et `POSIX`
+
+Pour les "dates" et les "dates et heures"
+
+...et les packages comme lubridate ? 
+
+## `Date` et `POSIX`
+
+Dans nos fichiers : 
+
+* 27/12/2018
+* 12/27/2018
+* 12/27/18
+* december 27 2018
+* 27 dec 2018
+* ...
+
+## `Date` et `POSIX` `?strptime`
+
+| code | Valeur |
+|--------|-------|
+|%a|jour de la semaine (abréviation)|
+|%A|jour de la semaine|
+|%b|mois (abréviation)|
+|%B|mois|
+|%d|jour du mois (decimal)|
+|%j|jour de l'année (decimal)|
+|%m|mois (decimal)|
+|%y|année avec deux chiffres|
+|%Y|année|
+|%U|semaine de l'année en commençant par dimanche (decimal)|
+|%W|semaine de l'année en commençant par lundi (decimal)|
+
+## `Date` et `POSIX` `?strptime`
+
+| code | Valeur |
+|--------|-------|
+|%H|heure 24|
+|%I|heure 12|
+|%M|minute|
+|%S|seconde|
+
+## `Date` et `POSIX`
+
+```{r}
+date1 <- "27/12/2018"
+as.Date(date1, format = "%d/%m/%Y")
+date2 <- "12/27/2018"
+as.Date(date2, format = "%m/%d/%Y")
+date3 <- "12/27/18"
+as.Date(date3, format = "%m/%d/%y")
+```
+
+## `Date` et `POSIX`
+
+```{r}
+date4 <- "December 27 2018"
+as.Date(date4, format = "%B %d %Y")
+format(as.Date(date3, format = "%m/%d/%y"), "%B")
+myConfig <- Sys.getlocale("LC_TIME")
+print(myConfig)
+```
+
+## `Date` et `POSIX`
+
+```{r}
+Sys.setlocale("LC_TIME", "C") # turn off locale-specific sorting (?locales)
+as.Date(date4, format = "%B %d %Y")
+```
+
+## `Date` et `POSIX`
+
+```{r}
+date5 <- "27 dec 2018"
+as.Date(date5, format = "%d %b %Y")
+```
+
+## `Date` et `POSIX`
+
+```{r}
+Sys.setlocale("LC_TIME", "French_France.1252")
+date6 <- "27 décembre 2018"
+as.Date(date6, format = "%d %B %Y")
+date7 <- "27-12-2018"
+as.Date(date7, format = "%d-%m-%Y")
+```
+
+## `Date` et `POSIX`
+
+```{r}
+myDate <- as.Date(date7, format = "%d-%m-%Y")
+format(myDate, "%A %d %B %Y")
+```
+
+## `Date` et `POSIX`
+
+les 30 prochains 1er mai vont tomber un :
+
+```{r}
+format(
+  as.Date(paste0("01/05/20", 20:49), format = "%m/%d/%Y"), 
+  "%A %Y")
+```
+
+## `Date` et `POSIX` : nombre de jours fériés fixes
+
+```{r}
+jFeries <- format(
+  as.Date(c(
+    paste0("01/01/20", 20:49),
+    paste0("01/05/20", 20:49),
+    paste0("08/05/20", 20:49),
+    paste0("14/07/20", 20:49),
+    paste0("15/08/20", 20:49),
+    paste0("01/11/20", 20:49),
+    paste0("25/12/20", 20:49)), 
+    format = "%d/%m/%Y"),
+  "%Y %A")
+```
+
+## `Date` et `POSIX`
+
+```{r}
+jFeries <- gsub(
+  pattern = "lundi|mardi|mercredi|jeudi|vendredi", 
+  replacement = "ouaip", 
+  x= jFeries)
+jFeries <- gsub(
+  pattern = "samedi|dimanche", 
+  replacement = "ohhh", 
+  x= jFeries)
+head(jFeries)
+```
+
+## `Date` et `POSIX`
+
+```{r}
+jFeriesM <- matrix(
+  as.vector(table(jFeries)), 
+  ncol = 2, byrow = TRUE)
+colnames(jFeriesM) <- c("Ohhh", "Ouaip")
+rownames(jFeriesM) <- 2020:2049
+```
+
+## `Date` et `POSIX`
+
+```{r, fig.width = 10, fig.height = 5}
+barplot(t(jFeriesM), legend.text = TRUE, las = 3)
+```
+
+## `Date` et `POSIX`
+
+Class "POSIXct" represents the (signed) number of seconds since the beginning of 1970 (in the UTC time zone) as a numeric vector.
+
+## `Date` et `POSIX`
+
+```{r}
+dateHeure <- "27/12/2018 17:32:45"
+as.POSIXct(dateHeure, format = "%d/%m/%Y %H:%M:%S")
+```
+
+# <a href = "R015_intro_TD01.html"> TD 01 </a>
+
+# <a href = "R012_intro.html"> SUIVANT </a> {data-background=#273142}

@@ -1,0 +1,969 @@
+---
+title: "<small>Module R’Stat1 : ANOVA</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-SA 3.0</small></p>
+subtitle: ""
+---
+
+# ANOVA {data-background=#273142}
+
+## ANOVA
+
+* Analyse de variance ou ANOVA
+* *One-way analysis of variance (ANOVA)*
+* *One-factor ANOVA*
+
+sur la base des cours de L. Reboul et du "R book".
+
+## ANOVA
+
+Une extension de la comparaison de moyennes quand il y a plus de deux groupes. Les groupes sont des facteurs (`factor`), nous allons tester si la moyenne des différents groupes est la même ou pas. L'hypothèse Ho est qu'il y a au moins un groupe dont la moyenne n'est pas égale à celle des autres groupes.
+
+## ANOVA : hypothèses
+
+* les observations sont indépendantes
+* pour chaque groupe (`factor`), les données suivent une loi Normale
+* pour chaque groupe, la variance est la même
+
+## ANOVA et R
+
+```{r}
+df <- data.frame(
+  myGp = rep(1:3, times = 30),
+  myData = rnorm(90)
+)
+print(df)
+```
+
+## ANOVA et R
+
+```{r}
+str(df)
+```
+
+Le vecteur qui détermine le groupe doit être de type `factor` !
+
+* Eviter les groupes 1, 2, 3
+* TOUJOURS vérifier le type de données avec `str()`
+
+## ANOVA et R
+
+```{r}
+df$myGp <- as.factor(df$myGp)
+str(df)
+```
+
+## ANOVA 
+
+```{r, fig.width = 5, fig.height = 5}
+boxplot(df$myData ~ df$myGp, 
+  col = levels(df$myGp))
+```
+
+## ANOVA 
+
+```{r, fig.width = 5, fig.height = 5}
+boxplot(df$myData ~ df$myGp, 
+  col = as.numeric(levels(df$myGp)) + 1)
+```
+
+## ANOVA 
+
+```{r, fig.width = 5, fig.height = 4}
+myCol <- c("olivedrab1", "salmon", "slateblue4")
+boxplot(df$myData ~ df$myGp, 
+  col = myCol[as.numeric(levels(df$myGp))])
+```
+
+## ANOVA 
+
+```{r, fig.width = 5, fig.height = 4}
+myCol <- c("olivedrab1", "salmon", "slateblue4")
+boxplot(df$myData ~ df$myGp, 
+  col = myCol[as.numeric(levels(df$myGp))], 
+  names = paste0("trt_",levels(df$myGp)))
+```
+
+## ANOVA
+
+* Variable explicative qualitative (type `factor`) : "1", "3", ou "2"
+* Variable à expliquer quantitative continue : tirage au hasard dans une loi Normale de paramètres $\mu = 0$ et $\sigma = 1$.
+
+Ici nous avons 1 **facteur** qui prend comme **niveaux** (ou **modalités**) "1", "2", "3" ($p = 3$), et pour chaque niveau un échantillon de taille 30 (plan équilibré $n_1 = ... = n_p$).
+
+## ANOVA
+
+```{r}
+tapply(df$myData, INDEX = df$myGp, FUN = length)
+tapply(df$myData, INDEX = df$myGp, FUN = summary)
+```
+
+## ANOVA
+
+Nous allons tester si la moyenne des différents groupes est la même ou pas = mettre en évidence une différence de valeur moyenne selon le **niveau** du **facteur**.
+
+$Y_j=\mu + \alpha_j + \epsilon_j, j=1,... ,p$
+
+$H_0: \alpha_1 = ... = \alpha_j = ... = \alpha_P$
+
+## ANOVA
+
+On suppose :
+
+$y_{ij}=\mu+\alpha_j+\epsilon_{ij}, i=1,...,n_j, j=1,...,p$
+
+## ANOVA
+
+Dans notre modèle, on ne connait pas $\mu$, et $\alpha_1,...,\alpha_p$, ce qui fait $p+1$ inconnus. Comme nous n'avons que $p$ groupes, on impose que :
+
+$\sum_{j=1}^{p}n_j\alpha_j=0$ 
+
+compensation entre groupes 
+
+## ANOVA
+
+On minimise (moindres carrés) : 
+
+$\sum_{i}\sum_{j}(y_{ij}-\alpha_j-\mu)^2$
+
+## ANOVA
+
+Somme des carrés des variations dans le niveau j
+
+$D_j = \sum(y_{ij}-\overline{y}_j)^2$
+
+```{r}
+Dj <- sapply(levels(df$myGp), function(j){
+  sum((df$myData[df$myGp == j] - 
+    mean(df$myData[df$myGp == j]))^2)
+})
+print(Dj)
+```
+
+## ANOVA
+
+Somme des carrés des variations intra-niveaux
+
+$SS_{intra}=\sum_jD_j=(n-p)S^2$
+
+```{r}
+SSintra <- sum(Dj)
+print(SSintra)
+```
+
+## ANOVA
+
+Somme des carrés des variations inter-niveaux (SSE)
+
+$SS_{inter}=\sum_jnj(\overline{y}_j-\overline{y})^2$
+
+```{r}
+SSinter <- sum(sapply(levels(df$myGp), function(j){
+  length(df$myData[df$myGp == j]) * 
+    (mean(df$myData[df$myGp == j]) - 
+      mean(df$myData))^2
+}))
+print(SSinter)
+```
+
+## ANOVA
+
+Somme des carrés des variations totales (SST)
+
+$SST = \sum(y_{ij}-\overline{y})^2$
+
+```{r}
+SST <- sum((df$myData - mean(df$myData))^2)
+print(SST)
+```
+
+## ANOVA
+
+$SST=SS_{inter}+SS_{intra}$
+
+```{r}
+print(SSinter + SSintra)
+print(SST)
+```
+
+## ANOVA
+
+Indice de qualité : pourcentage de variation expliqué par le modèle
+
+$\eta^2=SS_{inter}/SST$
+
+```{r}
+eta2 <- SSinter / SST
+print(eta2)
+```
+
+## ANOVA
+
+Indice de Fisher
+
+$F=\frac{SS_{inter}/(p-1)}{SS_{intra}/n-p}$
+
+```{r}
+Fi <- (SSinter/(3-1)) / (SSintra/(90-3))
+print(Fi)
+```
+
+## ANOVA en images... (the R book)
+
+```{r, eval = FALSE}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+```
+
+## ANOVA en images...
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+```
+
+## ANOVA en images...
+
+```{r, eval = FALSE}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+abline(h = mean(df$myData))
+segments(
+  x0 = 1:nrow(df), 
+  y0 = rep(mean(df$myData), nrow(df)), 
+  x1 = 1:nrow(df), 
+  y1 = df$myData)
+```
+
+## ANOVA en images...
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+abline(h = mean(df$myData))
+segments(
+  x0 = 1:nrow(df), 
+  y0 = rep(mean(df$myData), nrow(df)), 
+  x1 = 1:nrow(df), 
+  y1 = df$myData)
+```
+
+## ANOVA en images...
+
+Représentation de la variance totale. 
+
+Somme des carrés des variations totales (SST)
+
+$SST = \sum(y_{ij}-\overline{y})^2$
+
+```{r}
+SST <- sum((df$myData - mean(df$myData))^2)
+print(SST)
+```
+
+## ANOVA en images...
+
+```{r, eval = FALSE}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+  segments(
+    x0 = as.numeric(rownames(df[df$myGp == p,])),
+    y0 = mean(df$myData[df$myGp == p]),
+    x1 = as.numeric(rownames(df[df$myGp == p,])),
+    y1 = df$myData[df$myGp == p], col = p
+  )
+  segments(
+    x0 = as.numeric(rownames(df[df$myGp == p,]))[1],
+    x1 = tail(as.numeric(rownames(df[df$myGp == p,])),1),
+    y0 = mean(df$myData[df$myGp == p]),
+    y1 = mean(df$myData[df$myGp == p]), col = p
+  )
+})
+```
+
+## ANOVA en images...
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+plot(df$myData, type = 'n', axes = FALSE, 
+  xlab = "", ylab = "")
+axis(1)
+axis(2)
+df <- df[order(df$myGp),]
+rownames(df) <- NULL
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+})
+trash <- lapply(levels(df$myGp), function(p){
+  points(
+    x = as.numeric(rownames(df[df$myGp == p,])), 
+    y = df$myData[df$myGp == p], 
+    col = as.numeric(p), pch = 16)
+  segments(
+    x0 = as.numeric(rownames(df[df$myGp == p,])),
+    y0 = mean(df$myData[df$myGp == p]),
+    x1 = as.numeric(rownames(df[df$myGp == p,])),
+    y1 = df$myData[df$myGp == p], col = p
+  )
+  segments(
+    x0 = as.numeric(rownames(df[df$myGp == p,]))[1],
+    x1 = tail(as.numeric(rownames(df[df$myGp == p,])),1),
+    y0 = mean(df$myData[df$myGp == p]),
+    y1 = mean(df$myData[df$myGp == p]), col = p
+  )
+})
+```
+
+## ANOVA en images...
+
+Somme des carrés des variations intra-niveaux
+
+$SS_{intra}=\sum_jD_j=(n-p)S^2$
+
+$D_j = \sum(y_{ij}-\overline{y}_j)^2$
+
+```{r}
+Dj <- sapply(levels(df$myGp), function(j){
+  sum((df$myData[df$myGp == j] - 
+    mean(df$myData[df$myGp == j]))^2)
+})
+SSintra <- sum(Dj)
+print(SSintra)
+```
+
+## ANOVA en images...
+
+Si $SST = SS_{intra}$, pas de différence entre moyennes.
+
+Calcul de $SS_{inter} = SST - SS_{intra}$
+
+=> quel seuil pour différence significqtive, test de Fisher sur les variances.
+
+## ANOVA
+
+Indice de Fisher
+
+$F=\frac{SS_{inter}/(p-1)}{SS_{intra}/n-p}$
+
+```{r}
+Fi <- (SSinter/(3-1)) / (SSintra/(90-3))
+print(Fi)
+# seuil critique 5% (F(p-1;n-p))
+qf(p=0.95, df1=3-1, df2=90-3)
+```
+
+## ANOVA
+
+Validation des hypothèses
+
+* échantillonnage aléatoire
+* variances égales
+* indépendance des erreurs
+* distribution normale des erreurs
+
+## ANOVA ; variances
+
+```{r}
+tapply(df$myData, INDEX = df$myGp, FUN = var)
+# Flinger-Killen : homogeneité des variances
+fligner.test(df$myData ~ df$myGp)
+```
+
+## ANOVA
+
+```{r}
+summary(aov(df$myData ~ df$myGp))
+```
+
+## ANOVA ; hypothèses
+
+```{r, fig.width = 10, fig.height = 5}
+par(mfrow = c(2, 2), ask = FALSE)
+plot(aov(df$myData ~ df$myGp))
+```
+
+## ANOVA ; hypothèses
+
+graph 1 : variances égales
+
+graph 2 : distribution normale des erreurs
+
+grpah 3/4 : indépendance des erreurs
+
+# ANOVA 2 facteurs - design équilibré {data-background=#273142}
+
+## ANOVA 2f
+
+* ANOVA à 2 facteurs
+* *Two-way ANOVA*
+
+## ANOVA 2f
+
+```{r}
+df2 <- data.frame(
+  myData = rnorm(360),
+  myGp1 = rep(c("t1", "t2", "t3"), each = 120),
+  myGp2 = rep(c("x1", "x2", "x3", "x4"), times = 90)
+)
+```
+
+## ANOVA 2f : hypothèses
+
+* Il n'y a pas de différence entre moyennes pour le groupe 1
+* Il n'y a pas de différence entre moyennes pour le groupe 2
+* Il n'y a pas d'interaction antre les groupes 1 et 2
+
+## ANOVA 2f
+
+Cas d'un design équilibré 3x4 : 30 observations par combinaison de facteurs.
+
+```{r}
+table(df2$myGp1, df2$myGp2)
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(df2$myData ~ df2$myGp1, 
+  col = c(2:4), las = 3)
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(df2$myData ~ df2$myGp1 + df2$myGp2, 
+  col = c(2:4), las = 3)
+abline(v = c(3.5, 6.5, 9.5))
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(df2$myData ~ df2$myGp2, 
+  col = c(2:5), las = 3)
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(df2$myData ~ df2$myGp2 + df2$myGp1, 
+  col = c(2:5), las = 3)
+abline(v = c(4.5, 8.5))
+```
+
+## ANOVA 2f
+
+```{r, eval = FALSE}
+interaction.plot(
+  x.factor = df2$myGp1, 
+  trace.factor = df2$myGp2, 
+  response = df2$myData, 
+  fun = mean, 
+  type = "b", legend = TRUE, 
+  xlab = "Treatment", ylab="Results",
+  pch = c(1, 19), col = 1:4)
+```
+
+## ANOVA 2f
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 5}
+interaction.plot(
+  x.factor = df2$myGp1, 
+  trace.factor = df2$myGp2, 
+  response = df2$myData, 
+  fun = mean, 
+  type = "b", legend = TRUE, 
+  xlab = "Treatment", ylab="Results",
+  pch = c(1, 19), col = 1:4)
+```
+
+## ANOVA 2f (additif : pas d'interaction)
+
+```{r}
+res2 <- aov(myData ~ myGp1 + myGp2, data = df2)
+summary(res2)
+```
+
+## ANOVA 2f (test interaction)
+
+```{r}
+res3 <- aov(myData ~ myGp1 * myGp2, data = df2)
+summary(res3)
+```
+
+## ANOVA 2f (stats descriptives)
+
+```{r}
+model.tables(res2, type = "means", se = TRUE)
+```
+
+## ANOVA 2f + Tukey Honest Significant Differences
+
+Comparaisons mutliples 2 à 2.
+
+```{r}
+TukeyHSD(res2)
+```
+
+## ANOVA 2f
+
+```{r}
+df3 <- data.frame(
+  myData = c(
+    rnorm(120), 
+    rnorm(120, mean = 2), 
+    rnorm(120, mean = 5)),
+  myGp1 = rep(c("t1", "t2", "t3"), each = 120),
+  myGp2 = rep(c("x1", "x2", "x3", "x4"), times = 90)
+)
+```
+
+## ANOVA 2f
+
+```{r}
+res4 <- aov(myData ~ myGp1 + myGp2, data = df3)
+summary(res4)
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(df3$myData ~ df3$myGp2 + df3$myGp1, 
+  col = c(2:5), las = 3)
+abline(v = c(4.5, 8.5))
+```
+
+## ANOVA 2f
+
+```{r}
+TukeyHSD(res4)
+```
+
+## ANOVA 2f
+
+```{r, fig.width = 10, fig.height = 5}
+par(mfrow = c(1, 2))
+plot(TukeyHSD(res4))
+```
+
+# ANOVA 2 facteurs - design non équilibré {data-background=#273142}
+
+## ANOVA (design non équilibré)
+
+... quand il n'y a pas le même nombre d'observations pour toutes les modalités !
+
+## ANOVA 
+
+```{r}
+df4b <- data.frame(
+  myData = c(
+    rnorm(240), 
+    rnorm(240, mean = 2), 
+    rnorm(240, mean = 5)),
+  myGp1 = rep(c("t1", "t2", "t3"), each = 240),
+  myGp2 = rep(c("x1", "x2", "x3", "x4"), times = 180)
+)
+sampleRow <- sample(1:nrow(df4b), size = 701)
+df5 <- df4b[sampleRow, ]
+```
+
+## ANOVA 2f
+
+```{r}
+table(df5$myGp1, df5$myGp2)
+```
+
+## ANOVA et les types I, II, et III
+
+En bref : Il y a différentes façons de calculer les sommes des carrés (SS). Il existe trois approches que l'on appelle I, II et III. si le design est non équilibré, il faut utiliser le type III alors que R utilise le type I par default. Le package *car* a une fonction prête à l'emploi pour faire cela.
+
+## ANOVA : fonction Anova du package "car"
+
+```{r}
+pkgCheck <- function(x){ 
+    if (!require(x, character.only = TRUE)){
+        install.packages(x, dependencies = TRUE)
+        if(!require(x, character.only = TRUE)) {
+            stop()
+        }
+    }
+}
+pkgCheck("car")
+```
+
+## ANOVA et les types I, II, et III
+
+```{r}
+myAnova <- aov(df5$myData ~ df5$myGp1 * df5$myGp2)
+Anova(myAnova, type = "III")
+```
+
+# ANOVA et Tukey {data-background=#273142}
+
+## ANOVA et Tukey
+
+```{r}
+dfx <- data.frame(
+  myData = c(
+    rnorm(60), 
+    rnorm(60, mean = 1), 
+    rnorm(60, mean = 2), 
+    rnorm(60, mean = 3),
+    rnorm(60, mean = 4), 
+    rnorm(60, mean = 5)),
+  myGp1 = rep(c(
+    paste0("t0", 1:9), 
+    paste0("t", 10:12)), each = 30)
+)
+```
+
+## ANOVA et Tukey
+
+```{r, fig.width = 10, fig.height = 4.5}
+boxplot(dfx$myData ~ dfx$myGp1)
+```
+
+## ANOVA et Tukey
+
+```{r}
+res6 <- aov(dfx$myData ~ dfx$myGp1)
+summary(res6)
+```
+
+## ANOVA et Tukey
+
+```{r}
+TukeyHSD(res6)
+```
+
+## ANOVA et Tukey
+
+```{r, eval = FALSE}
+# adapted from https://www.r-graph-gallery.com/84-tukey-test.html
+pkgCheck <- function(x){ 
+    if (!require(x, character.only = TRUE)){
+        install.packages(x, dependencies = TRUE)
+        if(!require(x, character.only = TRUE)) {
+            stop()
+        }
+    }
+}
+pkgCheck("multcompView")
+tuk <- TukeyHSD(res6)
+generate_label_df <- function(TUKEY, variable){
+  Tukey.levels <- TUKEY[[variable]][,4]
+  Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+  Tukey.labels$treatment=rownames(Tukey.labels)
+  Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+  return(Tukey.labels)
+}
+LABELS <- generate_label_df(TUKEY = tuk, "dfx$myGp1")
+myCol <- sample(colors(), size = 50)
+boxA <- boxplot(dfx$myData ~ dfx$myGp1, 
+  ylim=c(min(dfx$myData), 1.1*max(dfx$myData)), 
+  col = myCol[as.numeric(LABELS[,1])])
+over <- 0.1 * max(boxA$stats[nrow(boxA$stats),])
+text(
+  x = c(1:nlevels(dfx$myGp1)), 
+  y = boxA$stats[nrow(boxA$stats),] + over, 
+  labels = LABELS[,1], 
+  col = 1)
+```
+
+## ANOVA et Tukey
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+# adapted from https://www.r-graph-gallery.com/84-tukey-test.html
+pkgCheck <- function(x){ 
+    if (!require(x, character.only = TRUE)){
+        install.packages(x, dependencies = TRUE)
+        if(!require(x, character.only = TRUE)) {
+            stop()
+        }
+    }
+}
+pkgCheck("multcompView")
+tuk <- TukeyHSD(res6)
+generate_label_df <- function(TUKEY, variable){
+  Tukey.levels <- TUKEY[[variable]][,4]
+  Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+  Tukey.labels$treatment=rownames(Tukey.labels)
+  Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+  return(Tukey.labels)
+}
+LABELS <- generate_label_df(TUKEY = tuk, "dfx$myGp1")
+myCol <- sample(colors(), size = 50)
+boxA <- boxplot(dfx$myData ~ dfx$myGp1, 
+  ylim=c(min(dfx$myData), 1.1*max(dfx$myData)), 
+  col = myCol[as.numeric(LABELS[,1])])
+over <- 0.1 * max(boxA$stats[nrow(boxA$stats),])
+text(
+  x = c(1:nlevels(dfx$myGp1)), 
+  y = boxA$stats[nrow(boxA$stats),] + over, 
+  labels = LABELS[,1], 
+  col = 1)
+```
+
+## ANOVA et Tukey
+
+```{r, eval = FALSE}
+# adapted from https://www.r-graph-gallery.com/84-tukey-test.html
+tuk <- TukeyHSD(res6)
+generate_label_df <- function(TUKEY, variable){
+  Tukey.levels <- TUKEY[[variable]][,4]
+  Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+  Tukey.labels$treatment=rownames(Tukey.labels)
+  Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+  return(Tukey.labels)
+}
+LABELS <- generate_label_df(TUKEY = tuk, "dfx$myGp1")
+myCol <- sample(colors(), size = 50)
+boxA <- boxplot(dfx$myData ~ dfx$myGp1, 
+  ylim=c(min(dfx$myData), 1.1*max(dfx$myData)), 
+  col = myCol[as.numeric(LABELS[,1])], 
+  axes = FALSE, xlab = "", ylab = "")
+grid()
+axis(1, at = 1:12, labels = levels(dfx$myGp1))
+axis(2)
+over <- 0.1 * max(boxA$stats[nrow(boxA$stats),])
+text(
+  x = c(1:nlevels(dfx$myGp1)), 
+  y = boxA$stats[nrow(boxA$stats),] + over, 
+  labels = LABELS[,1], 
+  col = 1)
+```
+
+## ANOVA et Tukey
+
+```{r, echo = FALSE, fig.width = 10, fig.height = 6}
+# adapted from https://www.r-graph-gallery.com/84-tukey-test.html
+tuk <- TukeyHSD(res6)
+generate_label_df <- function(TUKEY, variable){
+  Tukey.levels <- TUKEY[[variable]][,4]
+  Tukey.labels <- data.frame(
+    multcompLetters(Tukey.levels)['Letters'])
+  Tukey.labels$treatment=rownames(Tukey.labels)
+  Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+  return(Tukey.labels)
+}
+LABELS <- generate_label_df(TUKEY = tuk, "dfx$myGp1")
+myCol <- sample(colors(), size = 50)
+boxA <- boxplot(dfx$myData ~ dfx$myGp1, 
+  ylim=c(min(dfx$myData), 1.1*max(dfx$myData)), 
+  col = myCol[as.numeric(LABELS[,1])], 
+  axes = FALSE, xlab = "", ylab = "")
+grid()
+axis(1, at = 1:12, labels = levels(dfx$myGp1))
+axis(2)
+over <- 0.1 * max(boxA$stats[nrow(boxA$stats),])
+text(
+  x = c(1:nlevels(dfx$myGp1)), 
+  y = boxA$stats[nrow(boxA$stats),] + over, 
+  labels = LABELS[,1], 
+  col = 1)
+```
+
+# ANOVA et hypothèses non vérifiées {data-background=#273142}
+
+## 
+
+Lorsque la variable à expliquer ne suit pas une loi Normale, nous pouvons transformer les données. Les transformations utilisent le plus souvent le log ou la puissance.
+
+## 
+
+InsecrSprays : The counts of insects in agricultural experimental units treated with different insecticides.
+
+```{r}
+data(InsectSprays)
+head(InsectSprays)
+```
+
+## 
+
+```{r, fig.width = 10, fig.height = 5}
+hist(InsectSprays$count)
+```
+
+## 
+
+```{r, fig.width = 10, fig.height = 4}
+par(mfrow = c(2, 2))
+hist((InsectSprays$count)^0.5, main = "^0.5")
+hist((InsectSprays$count)^2, main = "^2")
+hist((InsectSprays$count)^0.3, main = "^0.3")
+hist(log(InsectSprays$count), main = "Log")
+```
+
+##
+
+```{r}
+mod01 <- aov(sqrt(InsectSprays$count) ~ InsectSprays$spray)
+summary(mod01)
+```
+
+##  
+
+```{r, fig.width = 10, fig.height = 4}
+par(mfrow = c(2, 2))
+plot(mod01)
+```
+
+##
+
+```{r}
+shapiro.test(resid(mod01)) # normalité résidus
+```
+
+## 
+
+```{r}
+bartlett.test( # homogénéité de la variance
+  sqrt(InsectSprays$count) ~ InsectSprays$spray) 
+```
+
+## 
+
+```{r}
+pkgCheck("lmtest")
+dwtest(mod01) # indépendance des résidus
+```
+
+## Autres cas
+
+warpbreaks : This data set gives the number of warp breaks per loom, where a loom corresponds to a fixed length of yarn.
+
+```{r}
+data(warpbreaks)
+head(warpbreaks)
+```
+
+##
+
+```{r, fig.width = 10, fig.height = 4}
+par(mfrow = c(1, 2))
+boxplot(warpbreaks$breaks ~ warpbreaks$wool, main = "Laine")
+boxplot(warpbreaks$breaks ~ warpbreaks$tension, main = "Tension")
+```
+
+##
+
+```{r}
+mod02 <- aov(warpbreaks$breaks ∼ warpbreaks$wool * warpbreaks$tension)
+summary(mod02)
+```
+
+##
+
+```{r, fig.width = 10, fig.height = 4}
+par(mfrow = c(2, 2))
+plot(mod02) # pb homogénéité de la variance
+```
+
+##
+
+```{r}
+bartlett.test(warpbreaks$breaks, warpbreaks$wool)
+```
+
+##
+
+```{r}
+bartlett.test(warpbreaks$breaks, warpbreaks$tension)
+```
+
+##
+
+```{r}
+mod03 <- aov(log(warpbreaks$breaks) ∼ 
+  warpbreaks$wool * warpbreaks$tension)
+summary(mod03)
+```
+
+##
+
+```{r, fig.width = 10, fig.height = 4}
+par(mfrow = c(2, 2))
+plot(mod03)
+```
+
+##
+
+```{r}
+shapiro.test(resid(mod03))
+```
+
+##
+
+```{r}
+bartlett.test(log(warpbreaks$breaks), warpbreaks$wool)
+```
+
+##
+
+```{r}
+bartlett.test(log(warpbreaks$breaks), warpbreaks$tension)
+```
+
+
+
+
+
+# <a href = "R051_regLin.html"> Régression linéaire </a> {data-background=#273142}

@@ -1,0 +1,579 @@
+---
+title: "<small>Module R’Stat1 : Rappels (4/4)</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Rappels : un peu d'algorithmique {data-background=#273142}
+
+## Conditions avec `if` {data-background=#273142}
+
+## Conditions avec `if`
+
+**SI** [*cela*] **ALORS** [*cela*] **SINON** [*cela*]
+
+## Conditions avec `if`
+
+```{r}
+myVar <- 2
+if(myVar < 3){
+  print("myVar < 3")
+}else{
+  print("myVar >= 3")
+}
+```
+
+## Conditions avec `if`
+
+```{r}
+myVar <- TRUE
+if(is.character(myVar)){
+  print("myVar: character")
+} else {
+  if(is.numeric(myVar)){
+    print("myVar: numeric")
+  } else {
+    if(is.logical(myVar)){
+      print("myVar: logical")
+    } else {
+      print("myVar: ...")
+    }
+  }
+}
+```
+
+## Conditions avec `if`
+
+`if` n'évalue que le premier élément :
+
+```{r}
+# mauvais code !!!
+prueba <- c(TRUE, FALSE, FALSE)
+if(prueba == TRUE){
+  print("vrai")
+}
+```
+
+## Conditions avec `if`
+
+`if` n'évalue que le premier élément :
+
+```{r}
+prueba <- c(TRUE, FALSE, FALSE)
+if(prueba[1] == TRUE){
+  print("vrai (1)")
+}
+if(prueba[2] == TRUE){
+  print("vrai (2)")
+}
+```
+
+## Conditions avec `if`
+
+```{r}
+prueba <- c(TRUE, FALSE, FALSE)
+if(prueba[1] == TRUE & 
+    prueba[2] == TRUE & 
+    prueba[3] == TRUE){
+  print("vrai")
+}
+```
+
+## Conditions avec `if`
+
+```{r}
+prueba <- c(TRUE, FALSE, FALSE)
+if(sum(prueba == TRUE) == length(prueba)){
+  print("vrai")
+}
+```
+
+## Conditions avec `if`
+
+```{r}
+prueba <- c(TRUE, TRUE, TRUE)
+if(sum(prueba == TRUE) == length(prueba)){
+  print("vrai")
+}
+```
+
+## `&` y `&&`
+
+`&` : toutes les conditions
+
+`&&` : la première condition et les suivantes si la première est vraie.
+
+```{r}
+miNumero <- 9
+if(is.numeric(miNumero) & miNumero * 10 < 100){
+  print("Numéro < 10")
+}
+```
+
+## `&` y `&&`
+
+```{r, error = TRUE, warnings = TRUE}
+miNumero <- "55"
+if(is.numeric(miNumero) & miNumero * 10 < 100){
+  print("Numéro < 10")
+}
+```
+
+## `&` y `&&`
+
+```{r}
+miNumero <- "55"
+if(is.numeric(miNumero) && miNumero * 10 < 100){
+  print("Numéro < 10")
+}
+```
+
+## Boucles `for` {data-background=#273142}
+
+## Boucles `for`
+
+```{r}
+bdd <- data.frame(rep01 = rnorm(n = 100, mean = 10, sd = 1), 
+                  rep02 = rnorm(n = 100, mean = 10, sd = 1))
+print(head(bdd))
+```
+
+## Boucles `for`
+
+```{r}
+for (i in 1:5){
+  print(bdd$rep01[i] - bdd$rep02[i])
+}
+```
+
+## Boucles `for`
+
+```{r}
+letras <- letters
+for (i in seq_along(letras)){
+  if(letras[i] %in% c("a", "e", "i", "o", "u", "y")){
+    print(paste0("voyelle ", letras[i]," en position: ", i))
+  }
+}
+```
+
+## Boucles `for` et `R`
+
+R ne gère pas bien les boucles `for`. Nous verrons plus tard comment utiliser des alternatives. En attendant, lorsque cela est possible, le travail avec des vecteurs devrait être préféré.
+
+La plupart des exemples que l'on peut trouver sur Internet à propos de la boucle `for` peuvent être remplacés par des opérations vectorielles.
+
+## Boucles `for`
+
+```{r}
+# [1] FOR
+for (i in 1:5){
+  print(bdd$rep01[i] - bdd$rep02[i])
+}
+# [2] VECTOR
+head(bdd$rep01 - bdd$rep02)
+```
+
+## Boucles `for`
+
+```{r}
+letras <- letters
+# [1] FOR
+for (i in seq_along(letras)){
+  if(letras[i] %in% c("a", "e", "i", "o", "u", "y")){
+    print(paste0("voyelle ", letras[i]," en position: ", i))
+  }
+}
+# [2] VECTOR
+which(letras %in% c("a", "e", "i", "o", "u", "y"))
+```
+
+## Boucles `for`
+
+```{r}
+# nombre de nombres pairs
+# [1] FOR
+x <- sample(1:100, size = 20)
+count <- 0
+for (val in x) {
+  if(val %% 2 == 0){
+    count <- count + 1
+  }
+}
+print(count)
+# [2] VECTOR
+sum(x %% 2 == 0)
+```
+
+## Boucles `for`
+
+```{r}
+# calculer des valeurs au carré
+# [1] FOR
+x <- rep(0, 20)
+for (j in 1:20){
+  x[j] <- j^2
+}
+print(x)
+# [2] VECTOR
+(1:20)^2
+```
+
+## Boucles `for`
+
+```{r}
+# tirs de dés
+# [1] FOR
+ntrials = 1000
+trials = rep(0, ntrials)
+for (j in 1:ntrials){
+  trials[j] = sample(1:6, size = 1)
+}
+mean(trials)
+# [2] VECTOR
+mean(sample(1:6, ntrials, replace = TRUE))
+```
+
+## Boucles `for`
+
+C’est un bon exercice que d’explorer les nombreux exemples disponibles sur Internet sur la boucle `for` et d’essayer de les convertir en opérations vectorielles. Cela nous permet d’acquérir de bons réflexes de programmation avec R.
+
+En conclusion, il est recommandé de ne pas utiliser la boucle `for` avec R aussi souvent que possible. Dans ce cours, nous verrons des alternatives telles que les boucles de la famille `apply`.
+
+## Boucles `while`
+
+```{r}
+i <- 0
+while(i < 4){
+  print(i)
+  i <- i + 1
+}
+```
+
+## Boucles `while`
+
+```{r}
+myNumber <- sample(x = 10000, size = 1)
+myGuess <- sample(x = 10000, size = 1)
+paste0("Mon numéro secret: ", myNumber)
+paste0("L'essai de l'ordinateur: ", myGuess)
+```
+
+## Boucles `while`
+
+```{r}
+startTime <- Sys.time()
+print(startTime)
+```
+
+## Boucles `while`
+
+```{r}
+print(Sys.time() - startTime)
+```
+
+## Boucles `while`
+
+```{r}
+repeticiones <- 0
+startTime <- Sys.time()
+while(Sys.time() - startTime < 0.5){
+  repeticiones <- repeticiones + 1
+}
+print(repeticiones)
+```
+
+## Boucles `while`
+
+```{r}
+repeticiones <- 0
+startTime <- Sys.time()
+while(Sys.time() - startTime < 0.5){
+  repeticiones <- repeticiones + 1
+  if(repeticiones >= 1000){
+    break
+  }
+}
+print(repeticiones)
+```
+
+## Boucles `while`
+
+```{r}
+myNumber <- sample(x = 10000, size = 1)
+myGuess <- sample(x = 10000, size = 1)
+numberGuess <- 0
+startTime <- Sys.time()
+while(Sys.time() - startTime < 2){
+  if(myGuess == myNumber){
+    numberGuess <- numberGuess + 1
+    print(paste0("Numéro trouvé après ", 
+      numberGuess, " essais."))
+    print(paste0("Et il me reste plein de temps : ", 
+      round(2 - as.numeric(Sys.time() - startTime), 
+      digits = 2), " sec"))
+    break
+  }else{
+    myGuess <- sample(x = 10000, size = 1)
+    numberGuess <- numberGuess + 1
+  }
+}
+```
+
+## Boucles de la famille `apply` {data-background=#273142}
+
+## `apply`
+
+```{r}
+bdd <- matrix(rnorm(200), ncol = 20)
+print(bdd)
+```
+
+## `apply`
+
+```{r}
+apply(bdd, MARGIN = 2, FUN = mean)
+```
+
+## `apply`
+
+```{r}
+apply(bdd, MARGIN = 1, FUN = median)
+```
+
+## `apply`
+
+```{r}
+bdd <- matrix(sample(c(1:20, NA), size = 200, replace = TRUE), 
+  ncol = 20)
+apply(bdd, MARGIN = 2, FUN = mean)
+```
+
+## `apply`
+
+```{r}
+apply(bdd, MARGIN = 2, FUN = mean, na.rm = TRUE)
+```
+
+## `apply`
+
+```{r}
+apply(bdd, MARGIN = 2, FUN = function(i){
+  mean(i, na.rm = TRUE)
+})
+```
+
+## `lapply`
+
+```{r}
+myList <- list(
+  a = sample(1:100, size = 10), 
+  b = sample(1:100, size = 10), 
+  c = sample(1:100, size = 10), 
+  d = sample(1:100, size = 10), 
+  e = sample(1:100, size = 10)
+)
+print(myList)
+```
+
+## `lapply`
+
+```{r}
+lapply(myList, FUN = mean)
+```
+
+## `lapply`
+
+```{r}
+myList <- list(
+  a = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  b = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  c = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  d = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  e = sample(c(1:5, NA), size = 10, replace = TRUE)
+)
+print(myList)
+```
+
+## `lapply`
+
+```{r}
+lapply(myList, FUN = mean)
+```
+
+## `lapply`
+
+```{r}
+lapply(myList, FUN = mean, na.rm = TRUE)
+```
+
+## `lapply`
+
+```{r}
+lapply(myList, FUN = function(i){
+  mean(i, na.rm = TRUE)
+})
+```
+
+## `lapply`
+
+```{r}
+lapply(myList, FUN = function(i){
+  m <- mean(i, na.rm = TRUE)
+  if(m > 3){
+    return("grand")  
+  }else{
+    return("petit")
+  }
+})
+```
+
+## `lapply`
+
+Nombre de données manquantes
+
+```{r}
+lapply(myList, FUN = function(i){
+  sum(is.na(i))
+})
+```
+
+## `sapply`
+
+```{r}
+lapply(myList, FUN = function(i){
+  sum(is.na(i))
+})
+```
+
+## `sapply`
+
+```{r}
+sapply(myList, FUN = function(i){
+  sum(is.na(i))
+})
+```
+
+## `sapply`
+
+```{r}
+sapply(myList, FUN = '[[', 2)
+```
+
+## `sapply`
+
+```{r}
+myDF <- data.frame(
+  a = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  b = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  c = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  d = sample(c(1:5, NA), size = 10, replace = TRUE), 
+  e = sample(c(1:5, NA), size = 10, replace = TRUE)
+)
+print(myDF)
+```
+
+## `sapply`
+
+```{r}
+sapply(myDF, FUN = function(i){
+  sum(is.na(i))
+})
+```
+
+## `sapply`
+
+```{r echo = FALSE}
+guessNumber <- function(mySample){
+  myNumber <- sample(mySample, size = 1)
+  myGuess <- sample(mySample, size = 1)
+  numberGuess <- 0
+  success <- FALSE
+  startTime <- Sys.time()
+  while(Sys.time() - startTime < 5){
+    if(myGuess == myNumber){
+      numberGuess <- numberGuess + 1
+      success <- TRUE
+      break
+    }else{
+      myGuess <- sample(mySample, size = 1)
+      numberGuess <- numberGuess + 1
+    }
+  }
+  return(list(numberGuess, success))
+}
+```
+
+```{r echo = FALSE, message = FALSE}
+pkgCheck <- function(x){ 
+    if (!require(x, character.only = TRUE)){
+        install.packages(x, dependencies = TRUE)
+        if(!require(x, character.only = TRUE)) {
+            stop()
+        }
+    }
+}
+pkgCheck("palettesForR")
+```
+
+```{r}
+pruebaTiempo <- lapply(
+  seq(from = 1000, to = 5000, by = 1000),
+  function(sampleSize){
+  sapply(1:5, function(repet){
+    startTime <- Sys.time()
+    guessNumber(mySample = 1:sampleSize)
+    return(Sys.time() - startTime)
+  })
+})
+```
+
+## `sapply`
+
+```{r echo = FALSE}
+boxplot(pruebaTiempo, 
+	names = seq(from = 1000, to = 5000, by = 1000), 
+	las = 3, col = MATLAB_gpl)
+```
+
+## `tapply`
+
+```{r}
+col0 <- sample(LETTERS[1:5], size = 1000, replace = TRUE)
+col1 <- rnorm(n = 1000, mean = 10, sd = 0.5)
+col2 <- rlnorm(n = 1000, meanlog = 10, sdlog = 0.5)
+col3 <- rgamma(n = 1000, shape = 10, rate = 0.5)
+dfCol <- data.frame(col0, col1, col2, col3)
+print(head(dfCol, n = 10))
+```
+
+## `tapply`
+
+```{r}
+tapply(dfCol$col1, INDEX = dfCol$col0, FUN = summary)
+```
+
+## `tapply`
+
+```{r}
+sapply(2:4, FUN = function(i){
+  tapply(dfCol[,i], INDEX = dfCol$col0, FUN = mean)
+})
+```
+
+
+# Rappels : écrire une fonction {data-background=#273142}
+
+## Fonction
+
+```{r}
+maFonctionPlus2 <- function(x){
+  res <- x + 2
+  return(res)
+}
+maFonctionPlus2(x = 3)
+```
+
+# <a href = "R021_statsDescrp.html"> SUIVANT </a> {data-background=#273142}

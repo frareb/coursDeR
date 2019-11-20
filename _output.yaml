@@ -1,0 +1,12 @@
+  revealjs::revealjs_presentation:
+    lib_dir: "dependent_HTML_libraries"
+    highlight: zenburn
+    css: reveal.css
+    center: true
+    transition: slide
+    background_transition: convex
+    reveal_options:
+      slideNumber: true
+      #previewLinks: true
+      progress: true
+      mouseWheel: true

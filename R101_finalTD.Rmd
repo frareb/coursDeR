@@ -1,0 +1,312 @@
+---
+title: "<small>Module R’Stat1 : TD data mining </small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>using datasets from Kaggle</small></p>
+subtitle: ""
+---
+
+# 17K Mobile Strategy Games [kaggle](https://www.kaggle.com/tristan581/17k-apple-app-store-strategy-games/) {data-background=#273142}
+
+## 
+
+Every strategy game on the Apple App Store 
+
+fichier : TD_appstore_games.csv
+
+##
+
+```{r}
+bdd1 <- read.csv("./DATA/TD_appstore_games.csv")
+str(bdd1)
+require("jpeg") 
+```
+
+## Stats. descrp.
+
+```{r, fig.width=10, fig.height=4.5}
+myCol = colorRampPalette(c("red", "yellow", "green"))(10)
+hist(bdd1$Average.User.Rating, col = myCol, 
+  main = "Average user rating", xlab = "", ylab = "")
+```
+
+## 
+
+```{r, eval=FALSE}
+myCol = colorRampPalette(c("red", "yellow", "darkgreen"))(10)
+bdd1 <- bdd1[order(
+  bdd1$User.Rating.Count, 
+  bdd1$Average.User.Rating, 
+  decreasing = TRUE),]
+myX <- 15
+bddTopX <- head(bdd1, myX)
+myBar <- barplot(bddTopX$Average.User.Rating, 
+  ylim = c(0, 6.5), col = myCol[bddTopX$Average.User.Rating * 2])
+trash <- lapply(1:nrow(bddTopX), function(i){
+  myurl <- as.character(bddTopX$Icon.URL[i])
+  z <- tempfile()
+  download.file(myurl, z, mode = "wb")
+  img <- readJPEG(z)
+  rasterImage(img,
+    xleft = myBar[i] - 0.4,
+    xright = myBar[i] + 0.4,
+    ybottom = bddTopX$Average.User.Rating[i] + 0.5,
+    ytop = bddTopX$Average.User.Rating[i] + 1.25)
+  file.remove(z)
+})
+bddTopX$Name <- gsub(pattern = "\\\\xe9", 
+  replacement = "é", x = bddTopX$Name)
+bddTopX$Name <- gsub(pattern = "\\\\u2122", 
+  replacement = "TM", x = bddTopX$Name)
+text(x = myBar, y = 0.25, srt = 90, labels = bddTopX$Name, pos = 4)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=6, echo=FALSE}
+myCol = colorRampPalette(c("red", "yellow", "darkgreen"))(10)
+bdd1 <- bdd1[order(
+  bdd1$User.Rating.Count, 
+  bdd1$Average.User.Rating, 
+  decreasing = TRUE),]
+myX <- 15
+bddTopX <- head(bdd1, myX)
+myBar <- barplot(bddTopX$Average.User.Rating, 
+  ylim = c(0, 6.5), col = myCol[bddTopX$Average.User.Rating * 2])
+trash <- lapply(1:nrow(bddTopX), function(i){
+  myurl <- as.character(bddTopX$Icon.URL[i])
+  z <- tempfile()
+  download.file(myurl, z, mode = "wb")
+  img <- readJPEG(z)
+  rasterImage(img,
+    xleft = myBar[i] - 0.4,
+    xright = myBar[i] + 0.4,
+    ybottom = bddTopX$Average.User.Rating[i] + 0.5,
+    ytop = bddTopX$Average.User.Rating[i] + 1.25)
+  file.remove(z)
+})
+bddTopX$Name <- gsub(pattern = "\\\\xe9", 
+  replacement = "é", x = bddTopX$Name)
+bddTopX$Name <- gsub(pattern = "\\\\u2122", 
+  replacement = "TM", x = bddTopX$Name)
+text(x = myBar, y = 0.25, srt = 90, labels = bddTopX$Name, pos = 4)
+```
+
+##
+
+```{r, eval=FALSE}
+require("wordcloud")
+require("palettesForR")
+par(mfrow = c(2, 2), mar = c(0, 0, 0, 0))
+trash <- lapply(1:4, function(i){
+  desc <- bddTopX$Description[i]
+  desc <- gsub(pattern = "\\\\u2022", replacement = "", x = desc)
+  desc <- gsub(pattern = "\\\\u25cf", replacement = "", x = desc)
+  desc <- gsub(pattern = "\\\\uff08", replacement = "", x = desc)
+  desc <- gsub(pattern = '\\|:|\\\\n|\\"|,|\\(|\\)|\\.|:|\\*', 
+    replacement = " ", x = desc)
+  desc <- gsub(pattern = '!', replacement = " ", x = desc)
+  desc <- gsub(pattern = '  |  |  ', replacement = " ", x = desc)
+  desc <- gsub(pattern = '[0-9]', replacement = "", x = desc)
+  descW <- strsplit(desc, split = " ")[[1]]
+  descW <- descW[descW != ""]
+  wordcloud(descW, col = as.vector(Tango_gpl), scale = c(2.5, 0.5))
+  text(x = 0.5, y = 1, bddTopX$Name[i])
+})
+```
+
+##
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=7}
+require("wordcloud")
+require("palettesForR")
+par(mfrow = c(2, 2), mar = c(0, 0, 0, 0))
+trash <- lapply(1:4, function(i){
+  desc <- bddTopX$Description[i]
+  desc <- gsub(pattern = "\\\\u2022", replacement = "", x = desc)
+  desc <- gsub(pattern = "\\\\u25cf", replacement = "", x = desc)
+  desc <- gsub(pattern = "\\\\uff08", replacement = "", x = desc)
+  desc <- gsub(pattern = '\\|:|\\\\n|\\"|,|\\(|\\)|\\.|:|\\*', 
+    replacement = " ", x = desc)
+  desc <- gsub(pattern = '!', replacement = " ", x = desc)
+  desc <- gsub(pattern = '  |  |  ', replacement = " ", x = desc)
+  desc <- gsub(pattern = '[0-9]', replacement = "", x = desc)
+  descW <- strsplit(desc, split = " ")[[1]]
+  descW <- descW[descW != ""]
+  wordcloud(descW, col = as.vector(Tango_gpl), scale = c(2.5, 0.5))
+  text(x = 0.5, y = 1, bddTopX$Name[i])
+})
+```
+
+## 
+
+* Comment définir les meilleurs jeux ?
+* Quel lien entre *Rating* et prix ? achats dans le jeu ?
+* Quel lien entre *Rating* et le développeur ? le genre ? 
+* Quel lien entre *Rating* et la description ? le nombre de langues ?
+* Quel lien entre *Rating* et l'âge ?
+* ...
+
+# Human Resources Data Set [kaggle](https://www.kaggle.com/rhuebner/human-resources-data-set) {data-background=#273142}
+
+##
+
+Dataset used for learning data visualization and basic regression
+
+fichier : TD_HRDataset_v13.csv
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+Employee | Name	Employee’s full name	| Text
+EmpID|	Employee ID is unique to each employee	|Text
+MarriedID|	Is the person married (1 or 0 for yes or no)	|Binary
+MaritalStatusID|	Marital status code that matches the text field MaritalDesc	|Integer
+EmpStatusID|	Employment status code that matches text field EmploymentStatus	|Integer
+DeptID|	Department ID code that matches the department the employee works in	|Integer
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+PerfScoreID|	Performance Score code that matches the employee’s most recent performance score	|Integer
+FromDiversityJobFairID|	Was the employee sourced from the Diversity job fair? 1 or 0 for yes or no	|Binary
+PayRate|	The person’s hourly pay rate. All salaries are converted to hourly pay rate	|Float
+Termd|	Has this employee been terminated - 1 or 0	|Binary
+PositionID|	An integer indicating the person’s position	|Integer
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+Position|	The text name/title of the position the person has	|Text
+State|	The state that the person lives in	|Text
+Zip|	The zip code for the employee	|Text
+DOB|	Date of Birth for the employee	|Date
+Sex|	Sex - M or F	|Text
+MaritalDesc|	The marital status of the person (divorced, single, widowed, separated, etc)	|Text
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+CitizenDesc|	Label for whether the person is a Citizen or Eligible NonCitizen	|Text
+HispanicLatino|	Yes or No field for whether the employee is Hispanic/Latino	|Text
+RaceDesc|	Description/text of the race the person identifies with	|Text
+DateofHire|	Date the person was hired	|Date
+DateofTermination|	Date the person was terminated, only populated if, in fact, Termd = 1	|Date
+TermReason|	A text reason / description for why the person was terminated	|Text
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+EmploymentStatus|	A description/category of the person’s employment status. Anyone currently working full time = Active	|Text
+Department|	Name of the department that the person works in	|Text
+ManagerName|	The name of the person’s immediate manager	|Text
+ManagerID|	A unique identifier for each manager.	|Integer
+RecruitmentSource|	The name of the recruitment source where the employee was recruited from	|Text
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+PerformanceScore|	Performance Score text/category (Fully Meets, Partially Meets, PIP, Exceeds)	|Text
+EngagementSurvey|	Results from the last engagement survey, managed by our external partner	Float
+EmpSatisfaction|	A basic satisfaction score between 1 and 5, as reported on a recent employee satisfaction survey	|Integer
+SpecialProjectsCount|	The number of special projects that the employee worked on during the last 6 months	|Integer
+
+
+##
+
+Feature	| Description	| DataType
+---|---|---
+LastPerformanceReviewDate|	The most recent date of the person’s last performance review.	|Date
+DaysLateLast30|	The number of times that the employee was late to work during the last 30 days	|Integer
+
+##
+
+```{r}
+bdd2 <- read.table("./DATA/TD_HRDataset_v13.csv", 
+  header = TRUE, sep = ",")
+str(bdd2)
+```
+
+# Insect Light Trap [kaggle](https://www.kaggle.com/University-of-Copenhagen/insect-light-trap) {data-background=#273142}
+
+##
+
+The University of Copenhagen’s Zoological Museum zapped insects for 18 years
+
+fichier : TD_flightTrap.csv
+
+##
+
+```{r}
+bdd3 <- read.table("./DATA/TD_flightTrap.csv", 
+  header = TRUE, sep = ",")
+str(bdd3)
+```
+
+# Border Crossing Entry Data [kaggle](https://www.kaggle.com/akhilv11/border-crossing-entry-data) {data-background=#273142}
+
+## 
+
+Inbound US border crossing entries 
+
+fichier : TD_Border_Crossing_Entry_Data.csv
+
+##
+
+```{r}
+bdd4 <- read.table("./DATA/TD_Border_Crossing_Entry_Data.csv", 
+  header = TRUE, sep = ",")
+str(bdd4)
+```
+
+##
+
+```{r, eval=FALSE}
+require("sp")
+gadm <- readRDS("./DATA/gadm36_USA_1_sp.rds")
+myCol <- colorRampPalette(c("blue", "red"))(101)
+tabState <- data.frame(table(bdd4$State))
+tabState$Freq <- round( (tabState$Freq - min(tabState$Freq)) / 
+  (max(tabState$Freq) - min(tabState$Freq)) * 100 + 1)
+dfCol <- merge(gadm@data$NAME_1, tabState, 
+  by.x = 1, by.y = 1, all = TRUE)
+dfCol$myCol <- myCol[dfCol$Freq]
+plot(gadm, xlim = c(-124, -63), ylim = c(24, 50), col = dfCol$myCol)
+legend("bottomleft", title = "Border Crossing Entry (Rank events)", 
+  legend = c("10q", "20q", "30q", "40q", 
+  "50q", "60q", "70q", "80q", "90q", "100q"), 
+  fill = myCol[c(10, 20, 30, 40, 50, 60, 
+  70, 80, 90, 100)], ncol = 4)
+```
+
+##
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=7}
+require("sp")
+gadm <- readRDS("./DATA/gadm36_USA_1_sp.rds")
+myCol <- colorRampPalette(c("blue", "red"))(101)
+tabState <- data.frame(table(bdd4$State))
+tabState$Freq <- round( (tabState$Freq - min(tabState$Freq)) / 
+  (max(tabState$Freq) - min(tabState$Freq)) * 100 + 1)
+dfCol <- merge(gadm@data$NAME_1, tabState, 
+  by.x = 1, by.y = 1, all = TRUE)
+dfCol$myCol <- myCol[dfCol$Freq]
+plot(gadm, xlim = c(-124, -63), ylim = c(24, 50), col = dfCol$myCol)
+legend("bottomleft", title = "Border Crossing Entry (Rank events)", 
+  legend = c("10q", "20q", "30q", "40q", 
+  "50q", "60q", "70q", "80q", "90q", "100q"), 
+  fill = myCol[c(10, 20, 30, 40, 50, 60, 
+  70, 80, 90, 100)], ncol = 4)
+```
+
+
+
+
+
+

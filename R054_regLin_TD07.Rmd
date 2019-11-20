@@ -1,0 +1,308 @@
+---
+title: "<small>Module R’Stat1 : TD07</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Objectif {data-background=#273142}
+
+## Objectif
+
+Expliquer / prévoir la température en focntion des variables disponibles dans les données du climat.
+
+## Etapes
+
+* Etape 01 : charger les données
+* Etape 02 : le temps
+* Etape 03 : regarder les corrélations
+* Etape 04 : construire le modèle
+* Etape 05 : vérifier la colinéarité
+* Etape 06 : vérifier les hypothèses
+* Etape 07 : on change de stratégie ?
+
+
+# Etape 01 : charger les données {data-background=#273142}
+
+## Etape 01 : charger les données
+
+```{r}
+bdd <- read.table("./DATA/bdd.csv", header = TRUE, sep = ",", dec = ".")
+str(bdd)
+```
+
+# Etape 02 : le temps, variable continue quantitative ? {data-background=#273142}
+
+## Etape 02 : le temps, variable continue quantitative ?
+
+```{r}
+bdd$date <- as.POSIXct(
+  paste0(
+    bdd$year, "-", 
+    bdd$month, "-", 
+    bdd$day, " ", 
+    bdd$hour, ":", 
+    bdd$minute, ":", 
+    bdd$second), 
+  format = "%Y-%m-%d %H:%M:%S"
+)
+bdd <- bdd[,7:14]
+```
+
+## 
+
+```{r}
+str(bdd)
+bdd$date <- as.numeric(bdd$date)
+```
+
+# Etape 03 : regarder les corrélations {data-background=#273142}
+
+## Etape 03 : regarder les corrélations
+
+```{r}
+library("corrplot")
+library("RColorBrewer")
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+corrplot.mixed(cor(bdd, use = "complete.obs"), 
+  upper.col = rev(brewer.pal(10, "Spectral")))
+```
+
+# Etape 04 : construire le modèle {data-background=#273142}
+
+## Etape 04 : construire le modèle
+
+```{r}
+mod01 <- lm(temperature ~ .-lightIR-lightUV, data = bdd)
+summary(mod01)
+```
+
+## 
+
+```{r}
+mod02 <- step(
+  lm(temperature ~ .-lightIR-lightUV, data = bdd),
+  direction = "backward")
+```
+
+## 
+
+```{r}
+summary(mod02)
+```
+
+#  Etape 05 : vérifier la colinéarité {data-background=#273142}
+
+## Etape 05 : vérifier la colinéarité
+
+```{r}
+library("car")
+vif(mod01)
+```
+
+# Etape 06 : vérifier les hypothèses {data-background=#273142}
+
+## Etape 06 : vérifier les hypothèses
+
+```{r}
+# Trop de données, on ne peut pas inclure tous les résidus...
+# par(mfrow = c(2, 2))
+# plot(mod01)
+```
+
+##
+
+```{r}
+set.seed(1234)
+sampleP <- sample(1:nrow(bdd), size = 1000)
+mod0X <- lm(temperature ~ .-lightIR-lightUV, 
+  data = bdd[sampleP,])
+```
+
+##
+
+```{r, fig.width=10, fig.height=4}
+par(mfrow = c(2, 2))
+plot(mod0X)
+```
+
+##
+
+**Residuals vs Fitted**
+
+Il semble y avoir un patron dans les données avec des résidus non centrés sur zéro pour les températures froides et chaudes. Il pourrait y avoir une relation non-linéaire entre des variables explicatives et la variable à expliquer.
+
+**Normal Q-Q**
+
+La distribution des résidus n'est pas Normale pour certains points qui semblent correspondre aux températures chaudes (368431, 369705).
+
+##
+
+**Scale-Location**
+
+L'égalité de la variance ne semble pas respectée pour les valeurs de température chaudes (et dans une moindre mesure froides).
+
+**Residuals vs Leverage**
+
+Il ne semble pas y avoir de points extrèmes influançant significativement la régression.
+
+##
+
+```{r}
+# normalité résidus : problème !
+shapiro.test(resid(mod0X)) 
+```
+
+## 
+
+```{r}
+library("lmtest")
+dwtest(mod0X) # indépendance des résidus
+```
+##
+
+```{r}
+# outliers
+bdd[c(368431,369705,220672),]
+```
+
+##
+
+```{r}
+mod0X2 <- lm(temperature^0.5 ~ .-lightIR-lightUV, 
+  data = bdd[sampleP,])
+```
+
+##
+
+```{r, fig.width=10, fig.height=4}
+par(mfrow = c(2, 2))
+plot(mod0X2) # c'est pire !
+```
+
+# Etape 07 : Identifier le/s problème/s {data-background=#273142}
+
+## Etape 07 : on change de stratégie ?
+
+```{r}
+getNiceLmPlot <- function(myX, myY, myYlim = c(-10, 50)){
+  mod041 <- lm(myY ~ myX)
+  myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+  colRank <- (myY[!is.na(myX)] - predict(mod041))^2
+  colRank <- round((colRank - min(colRank)) / 
+    (max(colRank) - min(colRank)) * 100) + 1
+  plot(x = myX[!is.na(myX)], y = myY[!is.na(myX)], 
+    col = myCol[colRank], pch = 16, 
+    axes = FALSE, ylim = myYlim, panel.first = {
+      grid()
+      axis(1)
+      axis(2)
+    })
+  points(
+    x = myX[!is.na(myX)][order(myX[!is.na(myX)])], 
+    y = predict(mod041)[order(myX[!is.na(myX)])], 
+    type = 'l', lwd = 2)
+}
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+# temperature and humidity : ok?
+getNiceLmPlot(
+  myX = bdd$humidity[sampleP], 
+  myY = bdd$temperature[sampleP])
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+# temperature and gas : ???
+getNiceLmPlot(
+  myX = bdd$gas[sampleP], 
+  myY = bdd$temperature[sampleP])
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+# temperature and pressure : non-linear !!!
+getNiceLmPlot(
+  myX = bdd$pressure[sampleP], 
+  myY = bdd$temperature[sampleP])
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+# temperature and light : ?
+getNiceLmPlot(
+  myX = bdd$lightVisible[sampleP], 
+  myY = bdd$temperature[sampleP])
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+# temperature and date : non-linear !!!
+getNiceLmPlot(
+  myX = bdd$date[sampleP], 
+  myY = bdd$temperature[sampleP])
+```
+
+##
+
+```{r}
+mod0X3 <- lm(temperature ~ .
+  -lightIR-lightUV-date-pressure, 
+  data = bdd[sampleP,])
+```
+
+##
+
+```{r, fig.width=10, fig.height=4}
+par(mfrow = c(2, 2))
+plot(mod0X3) 
+```
+
+##
+
+```{r}
+# normalité résidus : ok tout juste !
+shapiro.test(resid(mod0X3)) 
+```
+
+##
+
+```{r}
+summary(mod0X3)
+```
+
+##
+
+```{r}
+modFinal <- lm(temperature ~ .
+  -lightIR-lightUV-date-pressure, 
+  data = bdd)
+```
+
+##
+
+```{r}
+summary(modFinal)
+```
+
+# Conclusion {data-background=#273142}
+
+## Conclusion
+
+La température semblerait être liée linéairement à l'humidité relative, aux composés organiques volatiles, à la quantité de lumière, mais non-linéairement à la pression atmosphérique et à la date (pour ce dernier c'était évident). 
+
+On ne peut pas tout expliquer avec le modèle linéaire !
+
+# <a href = "R055_modLin.html"> La régression linéaire de type polynomiale </a> {data-background=#273142}

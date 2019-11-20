@@ -1,0 +1,677 @@
+---
+title: "<small>Module R’Stat1 : La régression linéaire simple</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Introduction {data-background=#273142}
+
+## Problématique
+
+On dispose de l'observation de d'un échantillon de $n$ couples aléatoires ($X_i$, $Y_i$). Le problème est l'étude de la loi de ($X_i$, $Y_i$). La question de la *dépendance* entre X et Y se pose. 
+
+La *régression* consiste à chercher une fonction $f$ pour que $Y_i$ soit le plus proche possible de $f(X_i)$.
+
+Dans le cas de la *régression linéaire simple*, $f$ est $f(x) = \beta_2x + \beta_1$. Pour estimer $\beta_2$ et $\beta_1$, on utilise la *méthode des moindres carrés*. 
+
+## Références
+
+chapitre basé essentiellement sur le livre de Cornillon et Matzner-Lober (2011) : Régression avec R (Springer eds.)
+
+# Modélisation mathématique {data-background=#273142}
+
+## Formulation du problème mathématique
+
+Nous cherchons une fonction $f$ telle que $y_{i}=f(x_{i})$. 
+
+Pour chaque mesure `i`, nous allons chercher à minimiser la différence entre $y_i$ et $f(x_i)$, soit :
+
+$$ \sum_{i = 1}^{n} l(y_i - f(x_i)) $$
+
+$l()$ est appelée fonction de coût.
+
+La première étape est de définir le critère de qualité et la seconde étape de définir la (ou les) fonction à utiliser.
+
+## Critère de qualité
+
+Le choix du critère de qualité que nous allons retenir est la fonction de coût quadratique qui correspond à la différence au carré entre une observation $(x_i, y_i)$ et le point sur la droite de régression $(x_i, f(x_i))$. Nous cherchons donc à minimiser :
+
+$$ \sum_{i = 1}^{n} (y_i - f(x_i))^2 $$
+
+## Critère de qualité
+
+La conséquence du choix de cette fonction de coût est que les points éloignés de la droite de régression vont avoir plus d'importance que les autres.
+
+```{r, fig.width = 10, fig.height = 5, echo = FALSE}
+x <- seq(from = 0, to = 5, by = 0.05)
+y <- x^2
+plot(x, y, type = 'l')
+points(x = x, y = x, type = 'l', lty = 2)
+```
+
+## Fonctions
+
+Dans le cas de la régression linéaire simple, la fonction utilisée est la droite d'équation $y = \beta_1 + \beta_2x$. 
+
+<!--Un modèle linéaire est un modèle pour lequel y dépend linéairement du couple $(\beta_2, \beta_1)$. -->
+
+# Modélisation statistique {data-background=#273142}
+
+## Modèle de régression linéaire simple
+
+On suppose que nos observations $x$ et $y$ sont reliées sous la forme :
+
+$$Y=\beta_1 + \beta_2X$$
+
+On suppose aussi que la relation entre $x$ et $y$ est perturbée par un bruit, et notre modèle devient :
+
+$$Y=\beta_1 + \beta_2X + \epsilon$$
+
+## Modèle de régression linéaire simple
+
+Faire une *régression* de $y$ sur $x$ correspond à étudier la *dépendance* entre $y$ et $x$.
+
+- $Y$ est la variable à expliquer
+- $x$ est la variable explicative (ou prédicteur, régresseur)
+- $\epsilon$ est le bruit (ou erreur aléatoire de $Y$ par $f(x)$, résidu)
+
+## Modèle de régression linéaire simple
+
+$\beta_1$ et $\beta_2$ sont les paramètres de notre modèle, et $\epsilon$ le bruit ou erreur aléatoire. Pour calculer les valeurs de $\beta_1$ et $\beta_2$ nous allons utiliser les observations $x_i$ et $y_i$ :
+
+$$y_i=\beta_1 + \beta_2x_i + \epsilon_i$$
+
+# Estimateur des moindres carrés {data-background=#273142}
+
+## Calculs
+
+On va chercher à minimiser la quantité $S(\beta_1, \beta_2)$ tel que :
+
+$$ S(\beta_1, \beta_2) = \sum_{i = 1}^{n} (y_i - f(x_i))^2 $$
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 4.5, echo = TRUE}
+# exemple
+myX <- sort(rnorm(100))
+myY <- 0.5 * myX + 0.8 + rnorm(100, sd = 0.2)
+plot(x = myX, y = myY)
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+# fonction pour calculer les moindres carrés
+estMC <- function(b1, b2, x, y){
+  sum((y - b1 - b2*x)^2)
+}
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+# valeurs inconnues des estimateurs béta 1 et béta 2
+estB1 <- seq(from = 0, to = 1, by = 0.05)
+estB2 <- seq(from = 0, to = 1, by = 0.05)
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+# on fixe b2 et on fait varier b1
+myMCb1 <- sapply(seq_along(estB1), function(j){
+  estMC(b1 = estB1[j], b2 = estB2[1], x = myX, y = myY)
+})
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+# on fixe b1 et on fait varier b2
+myMCb2 <- sapply(seq_along(estB2), function(j){
+  estMC(b1 = estB1[1], b2 = estB2[j], x = myX, y = myY)
+})
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+# graphique des valeurs de moindres carrés
+par(mfrow = c(1, 2))
+plot(myMCb1, type = 'o', axes = FALSE, ylab = "S(b1, b2)", 
+  xlab = "estimateur de b1")
+axis(1, at = seq_along(estB1), labels = estB1)
+plot(myMCb2, type = 'o', axes = FALSE, ylab = "S(b1, b2)", 
+     xlab = "estimateur de b2")
+axis(1, at = seq_along(estB1), labels = estB1)
+par(mfrow = c(1, 1))
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 5, eval = TRUE, echo = FALSE}
+estMC <- function(b1, b2, x, y){
+  sum((y - b1 - b2*x)^2)
+}
+estB1 <- seq(from = 0, to = 1, by = 0.05)
+estB2 <- seq(from = 0, to = 1, by = 0.05)
+myMCb1 <- sapply(seq_along(estB1), function(j){
+  estMC(b1 = estB1[j], b2 = estB2[1], x = myX, y = myY)
+})
+myMCb2 <- sapply(seq_along(estB2), function(j){
+  estMC(b1 = estB1[1], b2 = estB2[j], x = myX, y = myY)
+})
+par(mfrow = c(1, 2))
+plot(myMCb1, type = 'o', axes = FALSE, ylab = "S(b1, b2)", 
+  xlab = "estimateur de b1")
+axis(1, at = seq_along(estB1), labels = estB1)
+plot(myMCb2, type = 'o', axes = FALSE, ylab = "S(b1, b2)", 
+     xlab = "estimateur de b2")
+axis(1, at = seq_along(estB1), labels = estB1)
+par(mfrow = c(1, 1))
+```
+
+## Calculs
+
+```{r}
+# on fait varier b1 et b2
+myMCb12 <- lapply(seq_along(estB1), function(j){
+  sapply(seq_along(estB2), function(k){
+    estMC(b1 = estB1[j], b2 = estB2[k], x = myX, y = myY)
+  })
+})
+```
+
+## Calculs
+
+```{r}
+# résultat dans une table
+myMCb12 <- do.call(rbind, myMCb12)
+head(myMCb12)
+```
+
+## Calculs
+
+```{r}
+# gradient de couleur du rouge au bleu
+# on ne rentre pas dans les détails ici...
+myCol <- colorRampPalette(c("blue", "white", "red"))(100)
+myColRankc <- (myMCb12[-1, -1] + 
+  myMCb12[-1, -ncol(myMCb12)] + 
+  myMCb12[-nrow(myMCb12), -1] + 
+  myMCb12[-nrow(myMCb12), -ncol(myMCb12)])/4
+myColRankc <- cut(myColRankc, 100)
+```
+
+## Calculs
+
+```{r, eval = FALSE}
+pmat <- persp(x = estB1, y = estB2, z = myMCb12, 
+  zlab = "S(b1, b2)", 
+  theta = 60, col = myCol[myColRankc])
+points(trans3d(x = estB1[myMCb1 == min(myMCb1)], 
+	y = estB2[myMCb2 == min(myMCb2)], 
+	z = min(myMCb12), pmat = pmat), 
+  pch = 16, col = 2)
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 5, eval = TRUE, echo = FALSE}
+myMCb12 <- lapply(seq_along(estB1), function(j){
+  sapply(seq_along(estB2), function(k){
+    estMC(b1 = estB1[j], b2 = estB2[k], x = myX, y = myY)
+  })
+})
+myMCb12 <- do.call(rbind, myMCb12)
+myCol <- colorRampPalette(c("blue", "white", "red"))(100)
+myColRankc <- (myMCb12[-1, -1] + 
+  myMCb12[-1, -ncol(myMCb12)] + 
+  myMCb12[-nrow(myMCb12), -1] + 
+  myMCb12[-nrow(myMCb12), -ncol(myMCb12)])/4
+myColRankc <- cut(myColRankc, 100)
+
+pmat <- persp(x = estB1, y = estB2, z = myMCb12, 
+  zlab = "S(b1, b2)", 
+  theta = 60, col = myCol[myColRankc])
+points(trans3d(x = estB1[myMCb1 == min(myMCb1)], 
+	y = estB2[myMCb2 == min(myMCb2)], 
+	z = min(myMCb12), pmat = pmat), 
+  pch = 16, col = 2)
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 5, eval = TRUE, echo = TRUE, message = FALSE}
+library(plotly)
+p <- plot_ly(x = estB1, y = estB2, z = myMCb12) %>% add_surface()
+p
+```
+
+## Calculs
+
+On peut observer que la fonction $S(\beta_1, \beta_2)$ est convexe, il n'y a donc qu'une seule solution. Cette solution peut être calculée analytiquement.
+
+$$\hat{\beta_1} = \overline{y} - \hat{\beta_2}\overline{x}$$
+
+  
+
+$$\hat{\beta_2} = \frac{\sum(x_i - \overline{x})y_i} {\sum(x_i - \overline{x})^2} $$
+
+Note : "Régression avec R" page 10 pour plus d'information sur les calculs.
+
+## Calculs
+
+```{r}
+estB2 <- sum((myX - mean(myX))*myY) / sum((myX - mean(myX))^2)
+estB1 <- mean(myY) - estB2 * mean(myX)
+fitY <- estB1 + estB2 * myX
+print(paste0("estimateur de béta 1 = ", estB1))
+print(paste0("estimateur de béta 2 = ", estB2))
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 5, eval = TRUE, echo = TRUE}
+plot(x = myX, y = myY)
+points(x = myX, y = fitY, type = 'l')
+```
+
+## Calculs
+
+```{r, eval = FALSE, echo = TRUE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+points(x = myX, y = fitY, type = 'l')
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+points(x = myX, y = fitY, type = 'l')
+```
+
+## Calculs
+
+```{r, eval = FALSE, echo = TRUE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+    segments(
+      x0 = myX,
+      y0 = fitY,
+      x1 = myX,
+      y1 = myY, 
+      col = myCol[colRank], lwd = 1
+    )
+  })
+points(x = myX, y = fitY, type = 'l')
+```
+
+## Calculs
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+    segments(
+      x0 = myX,
+      y0 = fitY,
+      x1 = myX,
+      y1 = myY, 
+      col = myCol[colRank], lwd = 1
+    )
+  })
+points(x = myX, y = fitY, type = 'l')
+```
+
+## Résidus
+
+Les résidus sont calculés avec $\hat{\epsilon_i}=y_i-\hat{y_i}$. La somme des résidus est nulle  (ici très proche de zéro à cause du nombre de chiffres significatifs dans les calculs).
+
+```{r}
+residus <- myY - fitY
+sum(residus)
+```
+
+## Résidus
+
+La variance résiduelle est estimée par la variation des résidus : 
+
+$$s^2=\frac{1}{n-2}\sum_{i=1}^{n}{e_i}^2$$
+
+```{r}
+varRes <- 1/(length(myX - 2)) * sum(residus^2)
+print(varRes)
+```
+
+## Prévision
+
+Pour une nouvelle valeur de X $x_{n+1}$, nous pouvons calculer $\hat{y_{n+1}} = \hat{\beta_1}+\hat{\beta_2}x_{n+1}$.
+
+```{r}
+newX <- 1:4
+previsionY <- estB1 + estB2 * newX
+print(previsionY)
+```
+
+# Hypothèses relatives au modèle de régression linéaire simple {data-background=#273142}
+
+## Hypothèses
+
+1- la distribution de $\epsilon$ est indépendante de $X$.
+
+2- $\epsilon$ est distribué normalement, centré sur zéro et de variance constante (homoscédasticité)
+
+## Hypothèses
+
+1- la distribution de $\epsilon$ est indépendante de $X$.
+```{r, fig.width = 10, fig.height = 5}
+plot(x = myX, y = residus)
+```
+
+## Hypothèses
+
+2- $\epsilon$ est distribué normalement, centré sur zéro et de variance constante
+
+```{r}
+# Normalité
+shapiro.test(residus)
+```
+
+## Hypothèses
+
+2- $\epsilon$ est distribué normalement, centré sur zéro et de variance constante
+
+```{r, fig.width = 10, fig.height = 4}
+# Normalité (2)
+qqnorm(residus)
+qqline(residus)
+```
+
+## Hypothèses
+
+2- $\epsilon$ est distribué normalement, centré sur zéro et de variance constante
+
+```{r, fig.width = 10, fig.height = 4}
+# centré sur 0
+hist(residus)
+```
+
+## Hypothèses
+
+2- $\epsilon$ est distribué normalement, centré sur zéro et de variance constante
+
+```{r, fig.width = 10, fig.height = 4}
+# variance constante
+plot(x = fitY, y = residus)
+```
+
+# Qualité de l'ajustement {data-background=#273142}
+
+## Somme des carrés des variations de $y$
+
+$$SST=\sum(y_i - \overline{y})^2$$
+
+```{r}
+SST <- sum((myY - mean(myY))^2)
+print(SST)
+```
+
+## Somme des carrés des variations expliquées par le modèle (grand)
+
+$$SSM=\sum(\hat{y_i} - \overline{y})^2$$
+
+```{r}
+SSM <- sum((fitY - mean(myY))^2)
+print(SSM)
+```
+
+## Somme des carrés des variations résiduelles (faible)
+
+$$SSR=\sum(\hat{y_i} - {y_i})^2$$
+
+```{r}
+SSR <- sum((residus)^2)
+print(SSR)
+print(SST - SSM)
+```
+
+## Coéficient de détermination R² (proche de 1)
+
+```{r}
+rSquared <- SSM / SST
+print(rSquared)
+```
+
+# La fonction `lm` {data-background=#273142}
+
+## La fonction `lm`
+
+Dans la pratique nous utilisons la fonction `lm` :
+
+```{r}
+myModel <- lm(myY ~ myX)
+print(myModel)
+```
+
+## La fonction `lm`
+
+```{r}
+summary(myModel)
+```
+
+## La fonction `lm`
+
+Coefficients: 
+
+* estimation des paramètres
+* écarts-types estimés
+* Stats du test $H_0: \beta_i = 0$ contre $H_1: \beta_i != 0$
+* p-value du test
+
+## La fonction `lm`
+
+```{r, fig.width = 10, fig.height = 5, eval = FALSE, echo = TRUE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+myPrev <- predict(myModel, interval = "confidence", level = 0.95)
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+points(x = myX, y = myPrev[,1], type = 'l', lwd = 2)
+points(x = myX, y = myPrev[,2], type = 'l', lty = 2, col = 2)
+points(x = myX, y = myPrev[,3], type = 'l', lty = 2, col = 2)
+```
+
+## La fonction `lm`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+myCol <- colorRampPalette(c("green", "blue", "red"))(101)
+colRank <- (myY - fitY)^2
+colRank <- round((colRank - min(colRank)) / 
+  (max(colRank) - min(colRank)) * 100) + 1
+myPrev <- predict(myModel, interval = "confidence", level = 0.95)
+plot(x = myX, y = myY, col = myCol[colRank], pch = 16, 
+  axes = FALSE, panel.first = {
+    grid()
+    axis(1)
+    axis(2)
+  })
+points(x = myX, y = myPrev[,1], type = 'l', lwd = 2)
+points(x = myX, y = myPrev[,2], type = 'l', lty = 2, col = 2)
+points(x = myX, y = myPrev[,3], type = 'l', lty = 2, col = 2)
+```
+
+## La fonction `lm`
+
+```{r}
+confint(myModel)
+```
+
+## La fonction `lm`
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+par(mfrow = c(2, 2))
+plot(myModel, which = 1)
+plot(myModel, which = 2)
+plot(myModel, which = 3)
+plot(myModel, which = 4)
+# plus d'info : https://data.library.virginia.edu/diagnostic-plots/
+```
+
+## La fonction `lm`
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+par(mfrow = c(2, 2))
+plot(myModel, which = 1)
+plot(myModel, which = 2)
+plot(myModel, which = 3)
+plot(myModel, which = 4)
+```
+
+# Exemple : multiples régressions {data-background=#273142}
+
+## Multiples régressions
+
+```{r}
+myX <- sort(rnorm(100000))
+myY <- 0.5 * myX + 0.8 + rnorm(100000, sd = 0.2)
+```
+
+## Multiples régressions
+
+* échantilloner aléatoirement 100 points (x, y)
+* utiliser le modèle de régression linéaire sur les 100 points
+* répéter l'opération 1000 fois (échantillon + régression)
+* calculer un intervalle de confiance et un écart type sur les estimateurs
+* comparer l'intervalle et l'écart type avec celui de la population
+
+## Multiples régressions
+
+1. Echantilloner 100 points
+
+```{r}
+sampleX <- sort(sample(seq_along(myX), size = 100))
+myXsample <- myX[sampleX]
+myYsample <- myY[sampleX]
+```
+
+## Multiples régressions
+
+2. Régression linéaire simple
+
+```{r}
+lm01 <- lm(myYsample ~ myXsample)
+print(lm01)
+```
+
+## Multiples régressions
+
+2. Régression linéaire simple
+
+```{r, fig.width = 10, fig.height = 6, eval = FALSE, echo = TRUE}
+plot(myX, myY)
+points(myXsample, myYsample, pch = 16, col = 2)
+myYsamplePrev <- predict(lm01)
+points(myXsample, myYsamplePrev, type = 'l', col = 4)
+```
+
+## Multiples régressions
+
+2. Régression linéaire simple
+
+```{r, fig.width = 10, fig.height = 6, eval = TRUE, echo = FALSE}
+plot(myX, myY)
+points(myXsample, myYsample, pch = 16, col = 2)
+myYsamplePrev <- predict(lm01)
+points(myXsample, myYsamplePrev, type = 'l', col = 4)
+```
+
+## Multiples régressions
+
+3. Répéter 1000 fois l'opération
+
+```{r}
+myCoef <- sapply(1:1000, function(i){
+  sampleX <- sort(sample(seq_along(myX), size = 100))
+  myXsample <- myX[sampleX]
+  myYsample <- myY[sampleX]
+  lm01 <- lm(myYsample ~ myXsample)
+  return(lm01$coefficients)
+})
+```
+
+## Multiples régressions
+
+4. Calculer un intervalle de confiance et l'écart type pour les estimateurs
+
+```{r}
+t.test(myCoef[1,])$conf
+t.test(myCoef[2,])$conf
+```
+
+## Multiples régressions
+
+4. Calculer un intervalle de confiance et l'écart type pour les estimateurs
+
+```{r}
+sd(myCoef[1,])
+sd(myCoef[2,])
+```
+
+## Multiples régressions
+
+5. Comparer
+
+```{r}
+lm0X <- lm(myY ~ myX)
+summary(lm0X)
+```
+
+## Multiples régressions
+
+5. Comparer
+
+```{r}
+confint(lm0X)
+```
+
+# <a href = "R052_regLin_TD06.html"> TD 6 : travail sur les données 'iris' </a> {data-background=#273142}

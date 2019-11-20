@@ -1,0 +1,129 @@
+---
+title: "<small>Module R’Stat1 : Introduction</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Module R’Stat1 : avant propos
+
+## Avant propos
+
+Ce cours est basé sur les références suivantes :
+<small>
+
+* LIVRE [The R book - Crawley M.J. 2012](https://www.wiley.com/en-fr/The+R+Book,+2nd+Edition-p-9780470973929)
+* LIVRE [Cornillon PA, Matzner-Lober E (2011) Régression avec R, Springer](http://doi.org/10.1007/978-2-8178-0184-1)
+* LIVRE/WEB [Se former au logiciel R : initiation et perfectionnement, F. Rebaudo](http://myrbookfr.netlify.com/)
+* LIVRE/WEB [Applied Time Series Analysis for Fisheries and Environmental Sciences](https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-correlation-within-and-among-time-series.html)
+* LIVRE/WEB [R pour les statophobes de D. Poinsot](https://perso.univ-rennes1.fr/denis.poinsot/Statistiques_%20pour_statophobes/R%20pour%20les%20statophobes.pdf)
+* WEB [Statistical tools for high-throughput data analysis](http://www.sthda.com) CC-BY-NC-SA
+* WEB [Tutorials Point](https://www.tutorialspoint.com)
+* WEB [ReadTheDocs.io](https://a-little-book-of-r-for-time-series.readthedocs.io)
+* WEB [C. Della Vedova](https://statistique-et-logiciel-r.com)
+* WEB [A. K. Fermin Rodriguez](http://fermin.perso.math.cnrs.fr/Files/Modele-Logistique.pdf)
+* WEB [M. Gesmann](https://magesblog.com/post/2015-08-04-generalised-linear-models-in-r/)
+* COURS [M. Mesnager ; Univ. Nanterre Paris X](http://gandalfmagicien.free.fr/psycho/Licence%203/Premier%20Semestre/CM%20Maths/chapitre2.pdf)
+* COURS [E. Paradis ; IRD](http://ape-package.ird.fr/ep/teaching.html)
+* COURS [L. Reboul ; Aix-Marseille Univ.](http://iml.univ-mrs.fr/~reboul/)
+* COURS [C. Prieur ; Univ. Grenoble Alpes](http://ljk.imag.fr/membres/Clementine.Prieur/M1SSD/03exemple.pdf)
+* COURS [E. Gallic ; Aix-Marseille Univ.](https://egallic.fr)
+* COURS [F. Bertrand ; Univ. de Technologie de Troyes](http://irma.math.unistra.fr/~fbertran/enseignement/Master1_2016_2/Master2Cours4.pdf)
+* COURS [S. Ballesteros ; ENS](http://rug.mnhn.fr/semin-r/PDF/semin-R_glm_SBallesteros_100608.pdf)
+
+</small>
+
+# Objectifs {data-background=#273142}
+
+## Effectuer des statistiques descriptives et les représenter graphiquement
+
+## Manipuler des données avancées
+
+## Connaître les modèles linéaires (régression et analyse de variance ANOVA et ANCOVA)
+
+## Construire et analyser  les séries temporelles 
+
+## Connaître les modèles linéaires généralisés (GLM)
+
+## Construire et interpréter des graphiques avancés
+
+
+# Organisation du travail {data-background=#273142}
+
+## Organisation du travail
+
+* Matinées théoriques
+* Après-midis pratiques
+
+
+# Philosophie {data-background=#273142}
+
+## Philosophie
+
+> - avancer au rythme du groupe
+> - avancer au rythme de chacun
+> - continuer son apprentissage de R tout en faisant des stats
+> - intégrer les bonnes pratiques pour un code lisible, réutilisable
+> - favoriser la reproductibilité des résultats
+> - intégrer son code dans une démarche de publication scientifique
+> - présenter les cas simples et les cas difficiles
+> - donner les clefs pour aller plus loin et être autonome
+> - toutes les questions sont les bienvenues
+
+
+# Plan de travail {data-background=#273142}
+
+## Rappels de quelques notions essentielles (R01)
+
+> - Rappels : environnement de travail 
+> - Rappels : la notion d'objet
+> - Rappels : le répertoire de travail
+> - Rappels : les types de données
+> - TD 01
+> - Rappels : les conteneurs de données
+> - Rappels : les graphiques simples
+> - TD 02
+> - Rappels : un peu d'algorithmique
+> - Rappels : les fonctions
+
+## Statistiques descriptives et graphiques associés (R02)
+
+> - Manipuler les données et statistiques descriptives
+> - Représentations graphiques
+> - Du graphique à la figure dans un article scientifique
+
+## Statistiques simples (R03)
+
+> - Intervalles de Confiance
+> - TD 03
+> - Comparaison d'une moyenne à une valeur de référence
+> - Comparaison de moyennes
+
+## ANOVA et regression linéaire (R04-R05)
+
+> - l'analyse de variance ANOVA
+> - la régression linéaire simple
+> - la régression linéaire multiple
+> - la régression linéaire de type polynomiale
+> - l'analyse de covariance ANCOVA
+
+## Les séries temporelles (données fonctionnelles)
+
+> - définitions
+> - la fonction `ts`
+> - séries staionnaires
+> - prévisions
+
+## Les modèles linéaires généralisés (GLM)
+
+> - GLM `[glims]`
+> - Exemple : données de comptage ~ var qt
+> - Exemple : données de comptage ~ var ql
+> - Exemple : données de type catégoriel binaire
+> - Exemple : données de type gamma
+> - Autres exemples...
+
+## Manipuler et représenter graphiquement des données avancées
+
+# <a href = "R011_intro.html"> SUIVANT </a> {data-background=#273142}

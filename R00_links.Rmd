@@ -1,0 +1,34 @@
+---
+title: "<small>Module R’Stat1 : Analyse de variance...et la modélisation linéaire</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+sourcefile: "<http://myrbookfr.netlify.com/>"
+---
+
+## Les cours
+
+Chapitre | Lien | Chapitre | Lien 
+--- | --- | --- | --- 
+R010 | <a href = "R010_intro.html"> Avant propos </a> | R041 | <a href = "R041_modLin.html"> ANOVA </a> 
+R011 | <a href = "R011_intro.html"> Rappels (1/4) </a> | R051 | <a href = "R051_regLin.html"> Régression linéaire </a> 
+R012 | <a href = "R012_intro.html"> Rappels (2/4) </a> | R053 | <a href = "R053_regLinMult.html"> Régression linéaire multiple </a> 
+R013 | <a href = "R013_intro.html"> Rappels (3/4) </a> | R055 | <a href = "R055_modLin.html"> Régression linéaire polynomiale </a>
+R014 | <a href = "R014_intro.html"> Rappels (4/4) </a> | R061 | <a href = "R061_ANCOVA.html"> ANCOVA </a>
+R021 | <a href = "R021_statsDescrp.html"> Statistiques descriptives </a> | R071 | <a href = "R071_ts.html"> Les séries temporelles </a>
+R031 | <a href = "R031_statsSimple.html"> Statistiques simples </a> | R081 | <a href = "R081_glm.html"> GLM </a>
+
+## Les travaux dirigés
+
+Chapitre | Lien 
+--- | --- 
+R015 | <a href = "R015_intro_TD01.html"> TD 01 : statistiques descriptives sur l'âge et le genre</a>
+R016 | <a href = "R016_intro_TD02.html"> TD 02 : Les graphiques composés</a>
+R032 | <a href = "R032_statsSimple_TD03.html"> TD 03 : moyennes et IC95% sur le climat</a>
+R033 | <a href = "R033_statsSimple_TD04.html"> TD 04 : comparaison d'une moyenne à une référence sur le climat</a>
+R034 | <a href = "R034_statsSimple_TD05.html"> TD 05 : comparaison de moyennes avec 100 groupes</a>
+R052 | <a href = "R052_regLin_TD06.html"> TD 06 : régression linéaire avec les données `iris` </a>
+R054 | <a href = "R054_regLin_TD07.html"> TD 07 : prédire la température </a>
+R101 | <a href = "R101_finalTD.html"> TD XX : explorer des données </a>
+

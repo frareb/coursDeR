@@ -1,0 +1,652 @@
+---
+title: "<small>Module R’Stat1 : Les séries temporelles</small>"
+author: <small><francois.rebaudo@ird.fr></small>
+institute: IRD
+date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small>CC BY-NC-ND 3.0</small></p>
+subtitle: ""
+---
+
+# Définitions {data-background=#273142}
+
+## Série temporelle
+
+Mesures répétées à un pas de temps donné. Par exemple la température chaque jour, la valeur d'une action chaque semaine, le nombre d'insectes chaque mois, ... 
+
+Une série temporelle est *régulière* si le pas de temps est toujours le même et *irrégulière* dans le cas contraire. La plupart des analyses statistiques ne s'appliquent qu'aux séries temporelles régulières. La quasi totalité des séries temporelles en biologie sont irrégulières !
+
+!! On ne va que survoler la thématique des séries temporelles qui fait l'objet de nombreux livres et de nombreux packages R !!! [Vue d'ensemble ici](cran.r-project.org/web/views/TimeSeries.html)
+
+## Décomposition
+
+Une série temporelle peut être décomposée en : 
+
+* une tendance ou orientation (en général avec un modèle linéaire)
+* une composante saisonnière (quelque chose qui revient avec périodicité)
+* une composante aléatoire (bruit de fond)
+* une composante cyclique (des évènements qui reviennent avec des variations, par exemple El Niño)
+
+## Pour quoi faire ?
+
+Pour décrire, expliquer, faire des hypothèses, modéliser, prévoir, ...
+
+# `ts` {data-background=#273142}
+
+##
+
+```{r}
+# ?ts : The function ts is used to create time-series objects.
+myTs <- ts(data = rnorm(45), 
+  start = c(2016, 2), 
+  frequency = 12)
+print(myTs)
+```
+
+##
+
+```{r}
+str(myTs)
+```
+
+##
+
+```{r}
+myTs2 <- ts(data = rnorm(30), 
+  start = c(2019, 32), 
+  frequency = 365)
+print(myTs2)
+```
+
+# Mais concrètement, avec des données réelles ? {data-background=#273142}
+
+## Exemple : données météo
+
+Dans la pratique nos séries temporelles viennent d'un fichier. Et le fichier comportera souvent (si ce n'est tout le temps) des données manquantes ! 
+
+## Charger les données
+
+```{r}
+myData <- read.table("./DATA/bddSept2019.csv", header = TRUE, sep = ",", 
+  dec = ".")
+levelsRasp <- levels(myData$raspid)
+newNameRasp <- c("IC", "UP", "PR", "EG", "UT", "EM", "UM", "II")
+myData$raspid <- as.character(myData$raspid)
+for (i in seq_along(levelsRasp)){
+  myData$raspid <- gsub(
+    pattern = levelsRasp[i], 
+    replacement = newNameRasp[i], 
+    x = myData$raspid)
+}
+myData$raspid <- as.factor(myData$raspid)
+```
+
+## Dates au format POSIXct
+
+```{r}
+myData$timestamp <- as.POSIXct(myData$timestamp)
+str(myData)
+myData <- myData[order(myData$timestamp),]
+```
+
+## Aperçu des données
+
+```{r, fig.width=10, fig.height=4}
+plot(x = myData$timestamp[myData$raspid == levels(myData$raspid)[1]], 
+  y = myData$temperature[myData$raspid == levels(myData$raspid)[1]], 
+  type = 'l')
+```
+
+## Séparer les différentes mesures
+
+```{r}
+listTemp <- lapply(levels(myData$raspid), function(myId){
+  x <- tapply(
+    myData$temperature[myData$raspid == myId], 
+    INDEX = format(
+      myData$timestamp[myData$raspid == myId], 
+      "%Y-%m-%d %H"), 
+    FUN = mean, na.rm = TRUE)
+  data.frame(date = names(x), temp = x)
+})
+```
+
+## Mettre chaque mesure dans une colonne d'un `data.frame`
+
+```{r, warning=FALSE, error=FALSE}
+tmp <- merge(listTemp[[1]], listTemp[[2]], by.x = 1, by.y = 1, 
+  all = TRUE)
+tmp <- merge(tmp, listTemp[[3]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[4]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[5]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[6]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[7]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[8]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- tmp[order(as.POSIXct(tmp$date, format = "%Y-%m-%d %H")),]
+colnames(tmp) <- c("date", levels(myData$raspid))
+tmp$date <- as.POSIXct(tmp$date, format = "%Y-%m-%d %H")
+```
+
+## Identifier le nombre de données manquantes
+
+```{r}
+sapply(2:9, function(i){sum(is.na(tmp[,i]))})
+paste0(round(
+  sapply(2:9, function(i){sum(is.na(tmp[,i]))}) / (30*24) * 100, 
+  digits = 1), "%")
+```
+
+##
+
+```{r, eval = FALSE}
+par(mar = c(2, 8, 1, 1))
+image(sapply(2:9, function(i){is.na(tmp[,i])}), 
+  axes = FALSE, col = c("lightgreen", "salmon"))
+axis(
+  2, labels = levels(myData$raspid), las = 1,
+  at = seq(
+    from = 0, to = 1, 
+    length.out = length(levels(myData$raspid))))
+axis(1, at = seq(from = 0, to = 1, length.out = 31), 
+  labels = c(1:30, ""), las = 3)
+abline(v = seq(from = 0, to = 1, length.out = 31), 
+  lty = 3, col = "gray")
+```
+
+##
+
+```{r, echo = FALSE, fig.width=10, fig.height=6}
+par(mar = c(2, 8, 1, 1))
+image(sapply(2:9, function(i){is.na(tmp[,i])}), 
+  axes = FALSE, col = c("lightgreen", "salmon"))
+axis(
+  2, labels = levels(myData$raspid), las = 1,
+  at = seq(
+    from = 0, to = 1, 
+    length.out = length(levels(myData$raspid))))
+axis(1, at = seq(from = 0, to = 1, length.out = 31), 
+  labels = c(1:30, ""), las = 3)
+abline(v = seq(from = 0, to = 1, length.out = 31), 
+  lty = 3, col = "gray")
+```
+
+##
+
+```{r}
+which(is.na(tmp$EM))
+```
+
+## Que faire ?
+
+```{r}
+print(tmp[is.na(tmp$EM),c("date", "EM")])
+```
+
+## <small>Remplacer les valeurs manquantes par la moyenne de la température à la même heure ?</small>
+
+```{r}
+mean(tmp$EM[format(tmp$date, "%H") == "00"], na.rm = TRUE)
+sd(tmp$EM[format(tmp$date, "%H") == "00"], na.rm = TRUE)
+```
+
+##
+
+```{r}
+tmpEM <- data.frame(
+  date = tmp$date,
+  EM = tmp$EM,
+  com = "", stringsAsFactors = FALSE
+)
+hours <- c(paste0("0", 0:9), 10:23)
+for(i in hours){
+  tmpEM$com[is.na(tmpEM$EM) & format(tmpEM$date, "%H") == i] <- "Fake"
+  tmpEM$EM[is.na(tmpEM$EM) & format(tmpEM$date, "%H") == i] <- 
+    mean(tmp$EM[format(tmp$date, "%H") == i], na.rm = TRUE)
+}
+tmpEM$com <- as.factor(tmpEM$com)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=4}
+plot(x = tmpEM$date[0:200], 
+  y = tmpEM$EM[0:200], 
+  col = tmpEM$com[0:200], 
+  pch = 16, type = 'o')
+```
+
+## Autres idées ?
+
+* Remplacer par la médiane ?
+* Prendre une valeur au hasard ?
+
+## Le package imputeTS
+
+```{r, warning=FALSE, error=FALSE, message=FALSE}
+library("imputeTS")
+tmpEM2 <- data.frame(
+  date = tmp$date,
+  EM = tmp$EM,
+  com = "", stringsAsFactors = FALSE
+)
+statsNA(as.vector(tmpEM2$EM))
+```
+
+## `?na.kalman`
+
+```{r, warning=FALSE}
+# Missing Value Imputation by Kalman Smoothing and State Space Models
+tmpEM2$kalman <- na.kalman(as.vector(tmpEM2$EM))
+# Missing Value Imputation by Last Observation Carried Forward
+tmpEM2$locf <- na.locf(as.vector(tmpEM2$EM))
+# Missing Value Imputation by Weighted Moving Average
+tmpEM2$ma <- na.ma(as.vector(tmpEM2$EM))
+# Seasonally Decomposed Missing Value Imputation
+tmpEM2$seadec <- na.seadec(as.vector(tmpEM2$EM))
+# Seasonally Splitted Missing Value Imputation
+tmpEM2$seasplit <- na.seasplit(as.vector(tmpEM2$EM))
+# Missing Value Imputation by Interpolation
+tmpEM2$interpolation <- na.interpolation(as.vector(tmpEM2$EM))
+```
+
+## 
+
+```{r, eval = FALSE}
+plot(x = tmpEM$date[0:200], 
+  y = tmpEM$EM[0:200], 
+  col = tmpEM$com[0:200], 
+  pch = 16, type = 'o')
+for(i in 4:9){
+  points(x = tmpEM2$date[c(1:34, 111:127)], 
+    y = tmpEM2[c(1:34, 111:127),i], 
+    col = i, pch = 16, type = 'p')
+}
+legend("topright", 
+  legend = c("mean hour", names(tmpEM2)[4:9]), 
+  col = c(2, 4:9), pch = 16)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=6}
+plot(x = tmpEM$date[0:200], 
+  y = tmpEM$EM[0:200], 
+  col = tmpEM$com[0:200], 
+  pch = 16, type = 'o')
+for(i in 4:9){
+  points(x = tmpEM2$date[c(1:34, 111:127)], 
+    y = tmpEM2[c(1:34, 111:127),i], 
+    col = i, pch = 16, type = 'p')
+}
+legend("topright", 
+  legend = c("mean hour", names(tmpEM2)[4:9]), 
+  col = c(2, 4:9), pch = 16)
+```
+
+# Mais concrètement, avec des données réelles ? (2) {data-background=#273142}
+
+## Exemple : mesures humaines
+
+Quand les relevés sont faits par des humains (sondage, piégeage, mesure physique, ...), par exemple tous les 10 jours, et bien il y a toujours un jour qui tombe un samedi ou un dimanche, ou alors il y avait (encore) une réunion... Bref : la série n'est pas régulière !
+
+Option 1 (tristement la plus courante) : fermer les yeux très fort, des fois que...
+
+Option 2 : régler le problème en faisant des hypothèses sur la distribution des données
+
+## Données théoriques
+
+```{r}
+set.seed(1234)
+x <- as.Date("01/01/2017", format = "%d/%m/%Y") + 
+  sapply(1:100, function(i){
+    if(sample(1:4, size = 1) == 1){
+      return(10 * i + sample(1:3, size = 1))
+    } else {
+      return(10 * i)
+    }
+  })
+y <- round(rnorm(100, mean = 100, sd = 20))
+df <- data.frame(x, y)
+```
+
+## 
+
+```{r}
+difDate<-vector()
+for (i in seq(nrow(df) - 1)){
+	difDate<-c(difDate,(df$x[i + 1] - df$x[i]))
+}
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+hist(difDate)
+```
+
+## Cas 1 : mesures accumulée (qt/unité de temps)
+
+## transformation avec l'écart à la moyenne
+
+```{r}
+mean(difDate)
+correct <- c(1, 1 - (difDate - mean(difDate))/mean(difDate))
+newDate <- seq(
+  from = df$x[1],
+  to = tail(df$x,1),
+  length.out = nrow(df))
+newY <- df$y * correct
+newDf <- data.frame(x = newDate, y = newY)
+head(newDf)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+plot(df, type = 'o')
+points(newDf, type = 'o', col = 2)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=4}
+boxplot(df$y, newDf$y, names = c("df", "newDf"))
+points(x = rnorm(nrow(df), mean = 1, sd = 0.1), 
+  y = df$y, pch = 16)
+points(x = rnorm(nrow(newDf), mean = 2, sd = 0.1), 
+  y = newDf$y, pch = 16)
+```
+
+## 
+
+```{r}
+t.test(df$y, newDf$y)
+```
+
+## Cas 2 : mesures ponctuelles (qt)
+
+```{r, fig.width=10, fig.height=4}
+lim <- 8
+plot(x = df$x[1:lim], y = df$y[1:lim], axes = FALSE, type = 'o', pch = 16)
+axis(1, at = df$x[1:lim], labels = format(df$x[1:lim], "%d/%m"))
+abline(v = c(seq(from = df$x[1], to = df$x[lim], by = 10)), lty = 2)
+```
+
+## 
+
+```{r}
+difSeq <- df$x - seq(
+  from = df$x[1], 
+  to = tail(df$x, 1), 
+  length.out = nrow(df))
+print(difSeq)
+```
+
+## 
+
+```{r}
+newDate <- seq(
+  from = df$x[1],
+  to = tail(df$x,1),
+  length.out = nrow(df))
+newY <- df$y
+objDate <- 10
+for(i in which(difSeq != 0)){
+  yModel <- lm(newY[c(i-1, i)] ~ c(newDate[i - 1], df$x[i]))
+  newY[i] <- yModel$coefficients[1] + 
+    yModel$coefficients[2]*as.numeric(newDate[i-1] + objDate)
+}
+newDf <- data.frame(x = newDate, y = newY)
+```
+
+## 
+
+```{r, eval = FALSE}
+lim <- 8
+plot(x = df$x[1:lim], y = df$y[1:lim], axes = FALSE, type = 'o', pch = 16)
+axis(1, at = df$x[1:lim], labels = format(df$x[1:lim], "%d/%m"))
+abline(v = c(seq(from = df$x[1], to = df$x[lim], by = 10)), lty = 2)
+points(
+  x = newDf$x[1:lim], 
+  y = newDf$y[1:lim], col = 2, 
+  type = 'o', pch = 16)
+```
+
+## 
+
+```{r, echo = FALSE, fig.width=10, fig.height=7}
+lim <- 8
+plot(x = df$x[1:lim], y = df$y[1:lim], axes = FALSE, type = 'o', pch = 16)
+axis(1, at = df$x[1:lim], labels = format(df$x[1:lim], "%d/%m"))
+abline(v = c(seq(from = df$x[1], to = df$x[lim], by = 10)), lty = 2)
+points(
+  x = newDf$x[1:lim], 
+  y = newDf$y[1:lim], col = 2, 
+  type = 'o', pch = 16)
+```
+
+## 
+
+```{r, eval = FALSE}
+lim <- nrow(df)
+plot(x = df$x[1:lim], y = df$y[1:lim], axes = FALSE, type = 'o', pch = 16)
+axis(1, at = df$x[1:lim], labels = format(df$x[1:lim], "%d/%m"))
+points(
+  x = newDf$x[1:lim], 
+  y = newDf$y[1:lim], col = 2, 
+  type = 'o', pch = 16)
+```
+
+## 
+
+
+```{r, echo = FALSE, fig.width=10, fig.height=7}
+lim <- nrow(df)
+plot(x = df$x[1:lim], y = df$y[1:lim], axes = FALSE, type = 'o', pch = 16)
+axis(1, at = df$x[1:lim], labels = format(df$x[1:lim], "%d/%m"))
+points(
+  x = newDf$x[1:lim], 
+  y = newDf$y[1:lim], col = 2, 
+  type = 'o', pch = 16)
+```
+
+##
+
+Ici nous ne voyons que quelques options simples... 
+
+# Quand enfin tout va bien : {data-background=#273142}
+
+## On peut travailler avec les séries temporelles !
+
+Remarque : il existe des cas où il est possible de travailler avec des séries temporelles irrégulières...
+
+## Données météo
+
+```{r, warning=FALSE, error=FALSE}
+myData <- read.table("./DATA/bddSept2019.csv", header = TRUE, sep = ",", 
+  dec = ".")
+levelsRasp <- levels(myData$raspid)
+newNameRasp <- c("IC", "UP", "PR", "EG", "UT", "EM", "UM", "II")
+myData$raspid <- as.character(myData$raspid)
+for (i in seq_along(levelsRasp)){
+  myData$raspid <- gsub(
+    pattern = levelsRasp[i], 
+    replacement = newNameRasp[i], 
+    x = myData$raspid)
+}
+myData$raspid <- as.factor(myData$raspid)
+myData$timestamp <- as.POSIXct(myData$timestamp)
+myData <- myData[order(myData$timestamp),]
+listTemp <- lapply(levels(myData$raspid), function(myId){
+  x <- tapply(
+    myData$temperature[myData$raspid == myId], 
+    INDEX = format(
+      myData$timestamp[myData$raspid == myId], 
+      "%Y-%m-%d %H"), 
+    FUN = mean, na.rm = TRUE)
+  data.frame(date = names(x), temp = x)
+})
+tmp <- merge(listTemp[[1]], listTemp[[2]], by.x = 1, by.y = 1, 
+  all = TRUE)
+tmp <- merge(tmp, listTemp[[3]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[4]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[5]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[6]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[7]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- merge(tmp, listTemp[[8]], by.x = 1, by.y = 1, all = TRUE)
+tmp <- tmp[order(as.POSIXct(tmp$date, format = "%Y-%m-%d %H")),]
+colnames(tmp) <- c("date", levels(myData$raspid))
+tmp$date <- as.POSIXct(tmp$date, format = "%Y-%m-%d %H")
+```
+
+## ts
+
+```{r, fig.width=10, fig.height=5}
+tsEG <- ts(tmp$EG, frequency = 24)
+plot(tsEG)
+```
+
+##
+
+```{r, fig.width=10, fig.height=5}
+boxplot(tsEG ~ cycle(tsEG))
+# effet "heure" très fort
+```
+
+## Décomposition de la série temporelle
+
+```{r}
+decompEG <- decompose(tsEG)
+print(decompEG)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+plot(decompEG)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+plot(x = tmp$date, 
+  y = tmp$EG - decompEG$seasonal, type = 'l')
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+plot(x = tmp$date, 
+  y = decompEG$random, type = 'l')
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+hist(decompEG$random)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+shapiro.test(decompEG$random)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+qqnorm(decompEG$random)
+qqline(decompEG$random)
+```
+
+## ARMA : "auto-regression" et "moving average"
+
+=> seuleument pour les séries temporelles stationnaires : 
+
+* pas de tendance
+* variance stable
+
+## 
+
+```{r}
+myTs <- tsEG - decompEG$trend + mean(tsEG)
+myTs <- myTs[!is.na(myTs)]
+```
+
+## 
+
+```{r, fig.width=10, fig.height=4}
+par(mfrow = c(1, 2))
+acf(myTs)
+pacf(myTs)
+```
+
+## prévisions avec ARIMA : auto-regressive integrated moving average
+
+AR : auto-regressive (p = délais dans l'autocorrélation)
+
+I : integrated (d = différenciation ; rendre stationnaire une ts)
+
+MA : moving average (q = délais dans l'accumulation des erreurs)
+
+## Prévisions avec ARIMA 
+
+```{r, fig.width=10, fig.height=4}
+fit <- arima(myTs, c(2, 0, 1), seasonal = list(order = c(2, 0, 1), period = 24))
+pred <- predict(fit, n.ahead = 10*24)
+ts.plot(myTs, xlim = c(0, 1000))
+points(pred$pred, col = 2, type = 'l')
+```
+
+## Prévisions avec Holt-Winters Exponential Smoothing
+
+```{r, fig.width=10, fig.height=4, warning=FALSE}
+library("forecast")
+modL <- HoltWinters(tsEG)
+modLprev <- forecast(modL, h = 10*24)
+plot(modLprev)
+```
+
+## Pour approfondir
+
+[Forecasts using Exponential Smoothing](https://a-little-book-of-r-for-time-series.readthedocs.io/en/latest/src/timeseries.html)
+
+## La cross-corrélation
+
+Corrélation entre deux variables avec délais ?
+
+## 
+
+D'après E. E. Holmes, M. D. Scheuerell, and E. J. Ward, 2019. Applied Time Series Analysis for Fisheries and Environmental Sciences
+
+lynx : Annual numbers of lynx trappings for 1821–1934 in Canada. Taken from Brockwell & Davis (1991), this appears to be the series considered by Campbell & Walker (1977).
+
+sunspot.year : Yearly numbers of sunspots from 1700 to 1988 (rounded to one digit).
+
+```{r}
+## get the matching years of sunspot data
+suns <- ts.intersect(lynx, sunspot.year)[,"sunspot.year"]
+## get the matching lynx data
+lynx <- ts.intersect(lynx, sunspot.year)[,"lynx"]
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+plot(cbind(suns, lynx), yax.flip = TRUE)
+```
+
+## 
+
+```{r, fig.width=10, fig.height=5}
+# it looks like lynx numbers are relatively low 3-5 years after high sunspot activity
+ccf(suns, log(lynx), ylab = "Cross-correlation")
+```
+
+## Pour approfondir
+
+[Applied Time Series Analysis for Fisheries and Environmental Sciences](https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-correlation-within-and-among-time-series.html)
+
+## TD 
+
+Tester la cross-correlation et les auto-corrélations pour les données de bdd.csv pour les valeurs agrégées par jour des mois de juillet et août 2019, puis par heure.
+
+# <a href = "R081_glm.html"> Le modèle linéaire généralisé </a> {data-background=#273142}
