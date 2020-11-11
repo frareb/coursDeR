@@ -6,25 +6,21 @@ date: Novembre 2019 ; IRD-Montpellier-France <p style="text-align:center"><small
 subtitle: ""
 ---
 
-# TD01_1 : l'âge et le genre à l'IRD ;-) {data-background=#273142}
+# TD01_1 : Manipulation de données RH (1) {data-background=#273142}
 
 ## Objectifs
 
-* Créer un objet `bdd` avec 2500 employés et les colonnes :
-  - `prenoms` depuis le fichier "Prenoms.csv" au hasard pondéré par la fréquence
-  - `noms` depuis le fichier "patronymes.csv" au hasard pondéré par la fréquence
-  - `genre` depuis le fichier "Prenoms.csv"
-  - `dateN` une date de naissance entre 1955 et 2002 pour calculer l'âge
+* Créer un data.frame `bdd` avec 2500 employés et les variables :
+  - `prenoms` : fichier "Prenoms.csv" au hasard pondéré par la fréquence
+  - `noms` : fichier "patronymes.csv" au hasard pondéré par la fréquence
+  - `genre` : fichier "Prenoms.csv"
+  - `dateN` : date de naissance entre 1955 et 2002
 
 https://www.data.gouv.fr/fr/datasets/liste-de-prenoms-et-patronymes/
   
 ## Méthodes
 
-1- Lister les différentes étapes
-
-2- Se mettre d'accord sur les étapes
-
-3- ... et enfin coder en R
+Lister les différentes étapes et uniquement ensuite coder en R (concevoir puis implémenter).
 
 ## Etape 01 : lire les fichiers sources
 
@@ -79,7 +75,7 @@ bdd <- data.frame(
 ## Etape 04 : sélectionner une date de naissance
 
 ```{r}
-bdd$dateN = sample(
+bdd$dateN <- sample(
   seq(
     from = as.Date("01/01/1955", format = "%d/%m/%Y"),
     to = as.Date("01/01/2001", format = "%d/%m/%Y"), 
@@ -104,7 +100,8 @@ str(bdd)
 ## Etape 05 : vérifier la structure des données
 
 ```{r}
-bdd$genre <- droplevels(bdd$genre)
+# compatibilité avec les versions de R antérieures à la 4.
+# bdd$genre <- droplevels(bdd$genre)
 ```
 
 ## Etape 05 : vérifier la structure des données
@@ -113,7 +110,7 @@ bdd$genre <- droplevels(bdd$genre)
 str(bdd)
 ```
 
-# TD01_2 : l'âge et le genre à l'IRD ;-) {data-background=#273142}
+# TD01_2 : Manipulation de données RH (2) {data-background=#273142}
 
 ## Objectifs
 
